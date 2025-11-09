@@ -44,10 +44,10 @@ class ClientsController extends Controller
         ->select('clients.*', 'client_companies.name as company_name')
         ->where('clients.status', '=', '1')
         ->get();
-        
+
         // Get user data
-        $userId = Auth::id(); 
-        
+        $userId = Auth::id();
+
         // Get client company data
         $clientcompany = ClientCompany::all();
 
@@ -74,20 +74,20 @@ class ClientsController extends Controller
         $orderColumnIndex = $request->input('order.0.column');
         $orderColumnName = $columns[$orderColumnIndex];
         $orderDirection = $request->input('order.0.dir');
-        
+
         // Get users data
-        $userId = Auth::id(); 
-        
+        $userId = Auth::id();
+
         // Get client company data
         $clientcompany = ClientCompany::all();
-        
+
         // SQL query
         $query = Client::leftJoin('client_companies', 'client_companies.id', '=', 'clients.company_id')
         ->select('clients.id', 'clients.name', 'clients.email', 'clients.phone', 'clients.designation', 'client_companies.name as company_name', 'clients.status')
         ->where('client_companies.status', '=', '1')
         ->where('clients.status', '=', '1')
         ->orderBy($orderColumnName, $orderDirection);
-        
+
         // Check if filter company name is set
         if ($company != "") {
             $query->where('clients.company_id', $company);
@@ -110,7 +110,7 @@ class ClientsController extends Controller
 
         // Get total filtered records count
         $totalFiltered = $query->count();
-        
+
         // Apply pagination
         $filteredData = $query->skip($start)->take($limit)->get();
 
@@ -137,7 +137,7 @@ class ClientsController extends Controller
         );
 
         echo json_encode($json_data);
-        
+
     }
 
     /**
@@ -297,7 +297,7 @@ class ClientsController extends Controller
             ],
             [
                 'delete_client_id.exists' => 'The client cannot be found.',
-            ] 
+            ]
         );
 
         // Handle failed validations
@@ -308,7 +308,7 @@ class ClientsController extends Controller
         try {
             // Ensure all queries successfully executed
             DB::beginTransaction();
-            
+
             // Select user id from client
             $client = Client::select('user_id')->where('id', $delete_client_id)->first();
 
@@ -319,7 +319,7 @@ class ClientsController extends Controller
                     'status'        => '0',
                     'deleted_at'    => $current_UTC,
                 ]);
-            
+
             // Delete user related to clients
             if ($client->user_id != ""){
                 User::find($client->user_id)->delete();
