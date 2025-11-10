@@ -304,10 +304,7 @@ class MasterFileController extends Controller
             ['key' => 'remarks',                 'label' => 'REMARKS'],
         ];
 
-        $editable = [
-            'outdoor_size'        => ['type' => 'text'],
-            'outdoor_coordinates' => ['type' => 'text'],
-        ];
+       $editable = [];
 
         $updateUrl = route('outdoor.inline.update');
 
@@ -321,81 +318,6 @@ class MasterFileController extends Controller
             'dateColumns' => ['created_at', 'start', 'end'],
         ]);
     }
-    // public function outdoor(Request $request)
-    // {
-    //     $q = MasterFile::query()
-    //         ->from('master_files as mf')
-    //         ->leftJoin('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
-    //         ->select([
-    //             'mf.id',
-    //             'mf.created_at',
-    //             'mf.month',
-    //             'mf.company',
-    //             'mf.product',
-    //             DB::raw('oi.site as location'),
-    //             'mf.duration',
-
-    //             // keep master-level dates (optional, for rows with no items)
-    //             'mf.date',
-    //             'mf.date_finish',
-
-    //             // ✅ add child-level dates so the table can use them
-    //             DB::raw('oi.start_date as start_date'),
-    //             DB::raw('oi.end_date   as end_date'),
-
-    //             DB::raw('oi.size as outdoor_size'),
-    //             DB::raw('oi.district_council as outdoor_district_council'),
-    //             DB::raw('oi.coordinates as outdoor_coordinates'),
-    //             DB::raw('oi.id as outdoor_item_id'),
-    //             'mf.remarks',
-    //         ])
-    //         ->where(function ($w) {
-    //             $w->whereRaw('LOWER(mf.product_category) LIKE ?', ['%outdoor%'])
-    //                 ->orWhereRaw('LOWER(mf.product) LIKE ?', ['%outdoor%'])
-    //                 ->orWhereRaw('LOWER(mf.product) LIKE ?', ['%billboard%']);
-    //         })
-    //         ->when(($term = trim((string) $request->get('search', ''))) !== '', function ($w) use ($term) {
-    //             $w->where(function ($qq) use ($term) {
-    //                 $qq->where('mf.company', 'like', "%{$term}%")
-    //                     ->orWhere('mf.product', 'like', "%{$term}%")
-    //                     ->orWhere('oi.site', 'like', "%{$term}%");
-    //             });
-    //         });
-
-    //     // (filters unchanged)
-    //     $q = $this->applyMonthFilterForJoinedQuery($q, $request->get('month'));
-    //     if ($from = $request->get('date_from')) $q->whereDate('mf.created_at', '>=', $from);
-    //     if ($to   = $request->get('date_to'))   $q->whereDate('mf.created_at', '<=', $to);
-
-    //     $rows = $q->orderByDesc('mf.created_at')
-    //         ->paginate(25)
-    //         ->appends($request->query());
-
-    //     $columns = [
-    //         ['key' => 'created_at',               'label' => 'CREATED AT'],
-    //         ['key' => 'month',                    'label' => 'MONTH'],
-    //         ['key' => 'company',                  'label' => 'COMPANY'],
-    //         ['key' => 'product',                  'label' => 'PRODUCT'],
-    //         ['key' => 'location',                 'label' => 'LOCATION'],
-    //         ['key' => 'outdoor_district_council', 'label' => 'AREA'],
-    //         ['key' => 'duration',                 'label' => 'DURATION'],
-    //         ['key' => 'date',                     'label' => 'DATE'],          // shown as start_date for outdoor rows (via partial mapping)
-    //         ['key' => 'date_finish',              'label' => 'DATE FINISH'],   // shown as end_date for outdoor rows
-    //         ['key' => 'outdoor_size',             'label' => 'OUTDOOR SIZE'],
-    //         ['key' => 'outdoor_coordinates',      'label' => 'OUTDOOR COORDINATES'],
-    //         ['key' => 'remarks',                  'label' => 'REMARKS'],
-    //     ];
-
-    //     return view('dashboard.master.outdoor', [
-    //         'rows'          => $rows,
-    //         'columns'       => $columns,
-    //         'column_labels' => collect($columns)->pluck('label', 'key')->all(),
-    //         'active'        => 'outdoor',
-    //         'paginator'     => $rows,
-    //     ]);
-    // }
-
-
 
 
     // Special version for joined queries (outdoor method)

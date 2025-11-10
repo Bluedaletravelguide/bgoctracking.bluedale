@@ -11,6 +11,7 @@
 
     $updateUrl = $updateUrl ?? url('/inline-update');
     $updatePayloadExtra = $updatePayloadExtra ?? [];
+    $protectedColumns = ['outdoor_size', 'outdoor_coordinates'];
 
     // default date columns
     $dateCols = $dateColumns ?? ['created_at','updated_at','date','date_finish','start_date','end_date','invoice_date'];
@@ -81,8 +82,8 @@
                 <tr class="hover:bg-gray-50">
                     @foreach($columns as $c)
                         @php
-    $colKey      = is_array($c) ? ($c['key'] ?? '') : $c;
-$isEditable  = array_key_exists($colKey, $editable);
+   $colKey      = is_array($c) ? ($c['key'] ?? '') : $c;
+$isEditable  = array_key_exists($colKey, $editable) && !in_array($colKey, $protectedColumns);
 $type        = $isEditable ? ($editable[$colKey] ?? 'text') : null;
 
 // Use master_file_id for outdoor rows
