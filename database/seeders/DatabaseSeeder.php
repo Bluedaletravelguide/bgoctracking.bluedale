@@ -17,9 +17,9 @@ class DatabaseSeeder extends Seeder
             InitialUsersSeeder::class,
 
             // 3) Lepas tu baru data lain
-            JobSeeder::class,
-            MasterFileSeeder::class,
-            OutdoorCoordinatorSeeder::class,
+            // JobSeeder::class,
+            // MasterFileSeeder::class,
+            // OutdoorCoordinatorSeeder::class,
 
             // 4) Kalau ada report permissions, run last
             // ReportPermissionSeeder::class,

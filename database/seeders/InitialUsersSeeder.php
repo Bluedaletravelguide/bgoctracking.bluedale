@@ -11,12 +11,11 @@ class InitialUsersSeeder extends Seeder
     public function run(): void
     {
         $accounts = [
-            ['name' => 'Admin One',   'email' => 'admin1@bluedale.com.my',   'username' => 'admin1',   'role' => 'admin'],
-            ['name' => 'Admin Two',   'email' => 'admin2@bluedale.com.my',   'username' => 'admin2',   'role' => 'admin'],
-            ['name' => 'User One',    'email' => 'user1@bluedale.com.my',    'username' => 'user1',    'role' => 'user'],
-            ['name' => 'User Two',    'email' => 'user2@bluedale.com.my',    'username' => 'user2',    'role' => 'user'],
-            ['name' => 'Support One', 'email' => 'support1@bluedale.com.my', 'username' => 'support1', 'role' => 'support'],
-            ['name' => 'Support Two', 'email' => 'support2@bluedale.com.my', 'username' => 'support2', 'role' => 'support'],
+            ['name' => 'superadmin',   'email' => 'superadmin@bluedale.com.my',   'username' => 'admin1',   'role' => 'superadmin'],
+            ['name' => 'admin',   'email' => 'admin@bluedale.com.my',   'username' => 'admin',   'role' => 'admin'],
+            ['name' => 'support',    'email' => 'support@bluedale.com.my',    'username' => 'support',    'role' => 'support'],
+            ['name' => 'sales',    'email' => 'sales@bluedale.com.my',    'username' => 'sales',    'role' => 'sales'],
+            ['name' => 'services', 'email' => 'services@bluedale.com.my', 'username' => 'services', 'role' => 'services'],
         ];
 
         foreach ($accounts as $acct) {

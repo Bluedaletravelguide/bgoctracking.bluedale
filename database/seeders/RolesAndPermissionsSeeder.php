@@ -1,5 +1,7 @@
 <?php
+
 namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -74,6 +76,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Mapping role → permissions
         $map = [
+            'superadmin' => ['*'], // semua permission
             'admin' => ['*'], // semua permission
             'support' => [
                 'dashboard.view',
@@ -94,6 +97,16 @@ class RolesAndPermissionsSeeder extends Seeder
                 'calendar.manage',
             ],
             'user' => [
+                'dashboard.view',
+                'masterfile.view',
+                'masterfile.show',
+            ],
+            'sales' => [
+                'dashboard.view',
+                'masterfile.view',
+                'masterfile.show',
+            ],
+            'services' => [
                 'dashboard.view',
                 'masterfile.view',
                 'masterfile.show',
