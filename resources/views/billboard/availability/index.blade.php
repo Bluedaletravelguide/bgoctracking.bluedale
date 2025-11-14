@@ -386,7 +386,10 @@
                         <th
                             class="px-4 py-4 table-header min-w-[150px] dt-exclude-export dt-no-sort border-r border-neutral-300">
                             Detail</th>
-                        <th class="px-4 py-4 table-header min-w-[100px] dt-exclude-export dt-no-sort">Action</th>
+                        @if (Auth::guard('web')->check() &&
+                                Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                            <th class="px-4 py-4 table-header min-w-[100px] dt-exclude-export dt-no-sort">Action</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody id="billboard_tbody" class="bg-white divide-y divide-neutral-200">
@@ -543,70 +546,98 @@
             x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75"
             x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
             style="display: none;">
-            <div class="modal__content bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4"> <!-- Added rounded-xl -->
+
+            <div class="modal__content bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-5">
-                    <!-- Added dark:border-dark-5 -->
                     <h2 class="font-medium text-base mr-auto">Edit Status</h2>
-                    <!-- Close button using x-on:click -->
                     <button @click="showEditStatusModal = false; document.body.style.overflow = '';" type="button"
                         class="text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200">
-                        <!-- Added dark mode colors -->
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
+
                 <form id="editStatusForm">
                     <div class="p-5 grid grid-cols-12 gap-4 gap-y-3">
+
                         <!-- Client Name -->
                         <div class="col-span-12">
                             <label class="block text-sm font-medium text-[#1C1E26] mb-2">Client</label>
                             <p id="editBookingClient" class="mt-2 font-medium text-gray-700"></p>
                         </div>
+
                         <!-- Booking Dates -->
                         <div class="col-span-12">
                             <label class="block text-sm font-medium text-[#1C1E26] mb-2">Booking Period</label>
                             <p id="editBookingDates" class="mt-2 font-medium text-gray-700"></p>
                         </div>
-                        <!-- Status Dropdown -->
-                        <div class="col-span-12">
-                            <label class="block text-sm font-medium text-[#1C1E26] mb-2">Status <span
-                                    style="color: red;">*</span></label> <!-- Added label styling -->
-                            <select id="editBookingStatus"
-                                class="input w-full px-4 py-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#4bbbed] focus:border-[#4bbbed] transition-colors duration-200"
-                                required> <!-- Updated styling to match other inputs -->
-                                <option disabled selected hidden value="">-- Select Status --</option>
-                                <option value="pending_payment">Pending Payment</option>
-                                <option value="pending_install">Pending Install</option>
-                                <option value="ongoing">Ongoing</option>
-                                <option value="completed">Completed</option>
-                                <option value="dismantle">Dismantle</option>
-                            </select>
-                        </div>
-                        <!-- Remarks Textarea -->
-                        <div class="col-span-12">
-                            <label class="block text-sm font-medium text-[#1C1E26] mb-2">Remarks</label>
-                            <!-- Added label styling -->
-                            <textarea id="editBookingRemarks"
-                                class="input w-full px-4 py-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#4bbbed] focus:border-[#4bbbed] transition-colors duration-200"
-                                rows="3"></textarea> <!-- Updated styling to match other inputs -->
-                        </div>
+
+                        @if (Auth::guard('web')->check() &&
+                                Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                            <!-- Status Dropdown -->
+                            <div class="col-span-12">
+                                <label class="block text-sm font-medium text-[#1C1E26] mb-2">
+                                    Status <span class="text-red-500">*</span>
+                                </label>
+                                <select id="editBookingStatus"
+                                    class="input w-full px-4 py-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#4bbbed] focus:border-[#4bbbed] transition-colors duration-200"
+                                    required>
+                                    <option disabled selected hidden value="">-- Select Status --</option>
+                                    <option value="pending_payment">Pending Payment</option>
+                                    <option value="pending_install">Pending Install</option>
+                                    <option value="ongoing">Ongoing</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="dismantle">Dismantle</option>
+                                </select>
+                            </div>
+
+                            <!-- Remarks Textarea -->
+                            <div class="col-span-12">
+                                <label class="block text-sm font-medium text-[#1C1E26] mb-2">Remarks</label>
+                                <textarea id="editBookingRemarks"
+                                    class="input w-full px-4 py-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#4bbbed] focus:border-[#4bbbed] transition-colors duration-200"
+                                    rows="3"></textarea>
+                            </div>
+                        @else
+                            <!-- Non-admin: Readonly view -->
+                            <div class="col-span-12">
+                                <label class="block text-sm font-medium text-[#1C1E26] mb-2">Status</label>
+                                <input id="editBookingStatus"
+                                    class="input w-full px-4 py-3 border border-neutral-200 rounded-xl bg-gray-100 text-gray-700"
+                                    readonly />
+                            </div>
+
+                            <div class="col-span-12">
+                                <label class="block text-sm font-medium text-[#1C1E26] mb-2">Remarks</label>
+                                <textarea id="editBookingRemarks"
+                                    class="input w-full px-4 py-3 border border-neutral-200 rounded-xl bg-gray-100 text-gray-700" rows="3"
+                                    readonly></textarea>
+                            </div>
+                        @endif
                     </div>
-                    <!-- Buttons -->
+
+                    <!-- Footer Buttons -->
                     <div class="px-5 py-3 text-right border-t border-gray-200 dark:border-dark-5">
-                        <!-- Added dark:border-dark-5 -->
                         <button type="button" @click="showEditStatusModal = false; document.body.style.overflow = '';"
-                            class="button w-20 bg-gray-300 text-gray-700 mr-2 hover:bg-gray-400 transition-colors duration-200">Cancel</button>
-                        <!-- Added hover and transition -->
-                        <button type="button" id="editBookingButton"
-                            class="button w-20 bg-[#22255b] text-white hover:opacity-95 transition-colors duration-200">Update</button>
-                        <!-- Updated bg color to match theme -->
+                            class="button w-20 bg-gray-300 text-gray-700 mr-2 hover:bg-gray-400 transition-colors duration-200">
+                            {{ Auth::guard('web')->user()->hasRole(['superadmin', 'admin'])? 'Cancel': 'Close' }}
+                        </button>
+
+                        @if (Auth::guard('web')->check() &&
+                                Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                            <button type="button" id="editBookingButton"
+                                class="button w-20 bg-[#22255b] text-white hover:opacity-95 transition-colors duration-200">
+                                Update
+                            </button>
+                        @endif
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
     <!-- View Modal End -->
 
 
@@ -1951,8 +1982,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                            data-full="${encodeURIComponent(data)}"
-                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                        data-full="${encodeURIComponent(data)}"
+                                                                                                                        data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -1970,8 +2001,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                            data-full="${encodeURIComponent(data)}"
-                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                        data-full="${encodeURIComponent(data)}"
+                                                                                                                        data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2047,10 +2078,12 @@
                                 return element;
                             }
                         },
-                        {
-                            data: "id",
-                            render: function(data, type, row) {
-                                return `
+                        @if (Auth::guard('web')->check() &&
+                                Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                            {
+                                data: "id",
+                                render: function(data, type, row) {
+                                    return `
                         <div class="flex items-center space-x-2">
                             <!-- Edit Button -->
                             <a href="javascript:;" 
@@ -2075,8 +2108,9 @@
                                 </svg> 
                             </a>
                         </div>`;
-                            }
-                        }
+                                }
+                            },
+                        @endif
                     ],
                     createdRow: function(row, data) {
                         // Add Tailwind border and center classes to ALL cells in the row

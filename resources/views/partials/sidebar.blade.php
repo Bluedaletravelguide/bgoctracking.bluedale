@@ -156,11 +156,14 @@
                 x-transition:leave="transition ease-in duration-150"
                 x-transition:leave-start="opacity-100 transform scale-100"
                 x-transition:leave-end="opacity-0 transform scale-95">
-                <a href="{{ route('users.index') }}"
-                    @click="if (window.matchMedia('(max-width: 767px)').matches) close()"
-                    class="block mt-1 mx-3 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('users.*') ? 'bg-[#22255b] text-white' : 'hover:bg-neutral-50' }}">
-                    Users
-                </a>
+
+                @hasanyrole('superadmin|admin|support')
+                    <a href="{{ route('users.index') }}"
+                        @click="if (window.matchMedia('(max-width: 767px)').matches) close()"
+                        class="block mt-1 mx-3 px-3 py-2 rounded-lg text-sm  {{ request()->routeIs('users.*') ? 'bg-[#22255b] text-white' : 'hover:bg-neutral-50' }}">
+                        Users
+                    </a>
+                @endhasanyrole
 
                 <a href="{{ route('client-company.index') }}"
                     @click="if (window.matchMedia('(max-width: 767px)').matches) close()"

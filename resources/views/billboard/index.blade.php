@@ -97,89 +97,86 @@
                     </select>
                 </div>
 
-                @if (Auth::guard('web')->check() &&
-                        Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
-                    <!-- Row 1: State & Area -->
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <div class="flex flex-col">
-                            <label for="filterBillboardState"
-                                class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                            <select
-                                class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                id="filterBillboardState">
-                                <option value="all">All</option>
-                                @foreach ($states as $state)
-                                    <option value="{{ $state->id }}">{{ $state->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="flex flex-col">
-                            <label for="filterBillboardDistrict"
-                                class="block text-sm font-medium text-gray-700 mb-1">Area</label>
-                            <select
-                                class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                id="filterBillboardDistrict">
-                                <option value="all">All</option>
-                                @foreach ($districts as $district)
-                                    <option value="{{ $district->id }}">{{ $district->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                <!-- Row 1: State & Area -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex flex-col">
+                        <label for="filterBillboardState" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <select
+                            class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            id="filterBillboardState">
+                            <option value="all">All</option>
+                            @foreach ($states as $state)
+                                <option value="{{ $state->id }}">{{ $state->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
+                    <div class="flex flex-col">
+                        <label for="filterBillboardDistrict"
+                            class="block text-sm font-medium text-gray-700 mb-1">Area</label>
+                        <select
+                            class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            id="filterBillboardDistrict">
+                            <option value="all">All</option>
+                            @foreach ($districts as $district)
+                                <option value="{{ $district->id }}">{{ $district->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
 
-                    <!-- Row 2: Type, New/Existing, Size -->
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <div class="flex flex-col">
-                            <label for="filterBillboardType"
-                                class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                            <select
-                                class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                id="filterBillboardType">
-                                <option value="all">All</option>
-                                @foreach ($billboardTypes as $type)
-                                    <option value="{{ $type }}">{{ $type }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="flex flex-col">
-                            <label for="filterBillboardSiteType"
-                                class="block text-sm font-medium text-gray-700 mb-1">New/Existing</label>
-                            <select
-                                class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                id="filterBillboardSiteType">
-                                <option value="all">All</option>
-                                <option value="new">New</option>
-                                <option value="existing">Existing</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col">
-                            <label for="filterBillboardSize"
-                                class="block text-sm font-medium text-gray-700 mb-1">Size</label>
-                            <select
-                                class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                id="filterBillboardSize">
-                                <option value="all">All</option>
-                                @foreach ($billboardSize as $size)
-                                    <option value="{{ $size }}">{{ $size }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                <!-- Row 2: Type, New/Existing, Size -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex flex-col">
+                        <label for="filterBillboardType" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select
+                            class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            id="filterBillboardType">
+                            <option value="all">All</option>
+                            @foreach ($billboardTypes as $type)
+                                <option value="{{ $type }}">{{ $type }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                @endif
+                    <div class="flex flex-col">
+                        <label for="filterBillboardSiteType"
+                            class="block text-sm font-medium text-gray-700 mb-1">New/Existing</label>
+                        <select
+                            class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            id="filterBillboardSiteType">
+                            <option value="all">All</option>
+                            <option value="new">New</option>
+                            <option value="existing">Existing</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="filterBillboardSize" class="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                        <select
+                            class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            id="filterBillboardSize">
+                            <option value="all">All</option>
+                            @foreach ($billboardSize as $size)
+                                <option value="{{ $size }}">{{ $size }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
             </form>
 
             <!-- Buttons Section -->
             <div class="flex flex-col gap-2">
                 <!-- Add New Stock Button -->
-                <a href="javascript:;" data-toggle="modal" data-target="#addBillboardModal"
-                    class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add New Stock
-                </a>
+                @if (Auth::guard('web')->check() &&
+                        Auth::guard('web')->user()->hasRole(['superadmin', 'admin', 'support']))
+                    <a href="javascript:;" data-toggle="modal" data-target="#addBillboardModal"
+                        class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add New Stock
+                    </a>
+                @endif
 
                 <!-- Inventory Button -->
                 <a href="{{ route('stockInventory.index') }}"
@@ -247,7 +244,10 @@
                         <th
                             class="px-4 py-4 table-header min-w-[200px] dt-exclude-export dt-no-sort border-r border-neutral-300">
                             Show Detail</th> <!-- Add border to header cell -->
-                        <th class="px-4 py-4 table-header min-w-[100px] dt-exclude-export dt-no-sort">Actions</th>
+                        @if (Auth::guard('web')->check() &&
+                                Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                            <th class="px-4 py-4 table-header min-w-[100px] dt-exclude-export dt-no-sort">Actions</th>
+                        @endif
                         <!-- Last header cell, no right border if you don't want it -->
                     </tr>
                 </thead>
@@ -1230,11 +1230,13 @@
                                 return element;
                             }
                         },
-                        {
-                            data: "id", // Column index 11 (0-indexed) - Actions
-                            render: function(data, type, row) {
-                                let element =
-                                    `
+                        @if (Auth::guard('web')->check() &&
+                                Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                            {
+                                data: "id", // Column index 11 (0-indexed) - Actions
+                                render: function(data, type, row) {
+                                    let element =
+                                        `
                             <div class="flex items-center space-x-2">
                                 <!-- Edit Button -->
                                 <a href="javascript:;" 
@@ -1258,7 +1260,7 @@
                                 </a>
                                 <!-- Delete Button -->
                                 <a class="flex items-center text-theme-6" href="javascript:;" data-toggle="modal" data-target="#billboardDeleteModal" id="delete-billboard-` +
-                                    data + `">
+                                        data + `">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 w-4 h-4 mr-1">
                                         <polyline points="3 6 5 6 21 6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1267,9 +1269,10 @@
                                     </svg> 
                                 </a>
                             </div>`;
-                                return element;
-                            }
-                        },
+                                    return element;
+                                }
+                            },
+                        @endif
                     ],
                     createdRow: function(row, data) {
                         // Add Tailwind border and center classes to ALL cells in the row

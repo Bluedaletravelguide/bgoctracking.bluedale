@@ -59,6 +59,21 @@
                 max-width: 600px;
                 width: 90%;
             }
+
+            .elegant-btn-ghost {
+                background: transparent;
+                color: #4b5563;
+                border: 1px solid #d1d5db;
+                border-radius: 0.75rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+                font-weight: 500;
+                transition: all 150ms ease;
+            }
+
+            .elegant-btn-ghost:hover {
+                background: #f9fafb;
+            }
         </style>
         <!-- Add jQuery CDN -->
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"
@@ -87,31 +102,33 @@
                     <!-- BEGIN: Filter -->
                     <form class="xl:flex sm:mr-auto">
                         <!-- <div class="sm:flex items-center sm:mr-4">
-                            <label class="w-12 flex-none xl:w-auto xl:flex-initial mr-2">Company Status</label>
-                            <select class="input w-full sm:w-32 xxl:w-full mt-2 sm:mt-0 sm:w-auto border" id="inputContractStatus">
-                                <option value="all">All</option>
-                                <option value="1">Active</option>
-                                <option value="0">Inactive</option>
-                            </select>
-                        </div>
-                        <div class="mt-2 xl:mt-0">
-                            <button type="button" class="button w-full sm:w-16 bg-theme-32 text-white" id="filterClientCompanyButton">Filter</button>
-                        </div> -->
+                                                                        <label class="w-12 flex-none xl:w-auto xl:flex-initial mr-2">Company Status</label>
+                                                                        <select class="input w-full sm:w-32 xxl:w-full mt-2 sm:mt-0 sm:w-auto border" id="inputContractStatus">
+                                                                            <option value="all">All</option>
+                                                                            <option value="1">Active</option>
+                                                                            <option value="0">Inactive</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="mt-2 xl:mt-0">
+                                                                        <button type="button" class="button w-full sm:w-16 bg-theme-32 text-white" id="filterClientCompanyButton">Filter</button>
+                                                                    </div> -->
                     </form>
                     <!-- END: Filter -->
 
                     <!-- BEGIN: Add Client Company -->
                     <div class="text-center">
-                        <a href="javascript:;" onclick="openAltEditorModal('#clientCompanyAddModal')"
-                            class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-plus w-4 h-4">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add New Client
-                        </a>
+                        @hasanyrole('superadmin|admin|support')
+                            <a href="javascript:;" onclick="openAltEditorModal('#clientCompanyAddModal')"
+                                class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="feather feather-plus w-4 h-4">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Add New Client
+                            </a>
+                        @endhasanyrole
                     </div>
                     <!-- END: Add Client Company -->
                 </div>
@@ -130,7 +147,9 @@
                                 </th>
                                 <th class="px-4 py-4 table-header min-w-[350px] border-r border-neutral-300">Address</th>
                                 <th class="px-4 py-4 table-header min-w-[100px] border-r border-neutral-300">Phone No.</th>
-                                <th class="px-4 py-4 table-header min-w-[100px] dt-exclude-export dt-no-sort">Actions</th>
+                                @hasanyrole('superadmin|admin|support')
+                                    <th class="px-4 py-4 table-header min-w-[100px] dt-exclude-export dt-no-sort">Actions</th>
+                                @endhasanyrole
                             </tr>
                         </thead>
                         <tbody id="client_company_tbody" class="bg-white divide-y divide-neutral-200">
@@ -721,7 +740,7 @@
                     dom: "lBfrtip",
                     buttons: [{
                         extend: "excel",
-                        className: "button w-24 rounded-full shadow-md mr-1 mb-2 bg-theme-7 text-white",
+                        className: "elegant-btn-ghost",
                         title: $fileName,
                         exportOptions: {
                             columns: ":not(.dt-exclude-export)"
@@ -759,9 +778,10 @@
                         {
                             data: "phone"
                         },
-                        {
-                            data: "id",
-                            render: (data) => `
+                        @hasanyrole('superadmin|admin|support')
+                            {
+                                data: "id",
+                                render: (data) => `
                             <div class="flex justify-center items-center gap-3">
                                 <!-- Edit Icon -->
                                 <a href="javascript:;" 
@@ -796,7 +816,8 @@
                                 </a>
                             </div>
                         `
-                        }
+                            }
+                        @endhasanyrole
                     ],
                     createdRow: function(row, data) {
                         // Add Tailwind border and center classes to ALL cells in the row
@@ -806,7 +827,7 @@
                         const clientCellIndex = 2;
                         const clientCell = $(row).find('td').eq(clientCellIndex);
                         clientCell.removeClass('text-center').addClass(
-                        'text-left'); // Remove center, add left
+                            'text-left'); // Remove center, add left
 
                         // Add padding to the client cell for better readability
                         clientCell.addClass('px-4 py-2'); // Add horizontal and vertical padding
@@ -815,7 +836,7 @@
                         const clientAddrCellIndex = 3;
                         const clientAddrCell = $(row).find('td').eq(clientAddrCellIndex);
                         clientAddrCell.removeClass('text-center').addClass(
-                        'text-left'); // Ensure center
+                            'text-left'); // Ensure center
 
                         // Add padding to the client cell for better readability
                         clientAddrCell.addClass('px-4 py-2'); // Add horizontal and vertical padding
@@ -842,7 +863,7 @@
                         $("#client_company_table_paginate .paginate_button")
                             .addClass(
                                 "inline-flex items-center justify-center px-2 py-1 border rounded text-xs"
-                                );
+                            );
 
                         $("#client_company_table_paginate .paginate_button.current")
                             .addClass("bg-neutral-200 font-semibold");
@@ -921,63 +942,87 @@
             function formatPICs(pics, companyId) {
                 if (!pics || pics.length === 0) {
                     return `
-                    <div class="p-2">No PICs available</div>
-                    <div class="flex justify-end mb-2 mt-2">
-                        <button class="bg-theme-1 text-white px-5 py-1 rounded add-pic-btn" data-company-id="${companyId}">
-                            + Add PIC
-                        </button>
-                    </div>
-                `;
+            <div class="p-2">No PICs available</div>
+            <div class="flex justify-end mb-2 mt-2">
+                <button class="bg-theme-1 text-white px-5 py-1 rounded add-pic-btn" data-company-id="${companyId}">
+                    + Add PIC
+                </button>
+            </div>
+        `;
                 }
+
+                // Determine if the user has permission to see actions
+                const hasPermission =
+                    @hasanyrole('superadmin|admin')
+                        true
+                    @else
+                        false
+                    @endhasanyrole ;
 
                 // Start building the HTML string for the table
                 let html = `
-                <div class="ml-3 mb-1"><strong>PIC</strong></div>
-                <table class="table-auto w-full text-sm border border-gray-300 rounded-lg overflow-hidden">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Name</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Email</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Phone</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Designation</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-            `;
+                    <div class="ml-3 mb-1"><strong>PIC</strong></div>
+                    <table class="table-auto w-full text-sm border border-gray-300 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Name</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Email</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Phone</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Designation</th>
+                `;
+
+                // Conditionally add the Action column header
+                if (hasPermission) {
+                    html +=
+                        `<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-300">Action</th>`;
+                }
+
+                html += `
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                `;
 
                 // Loop through each PIC and add a row
                 pics.forEach(pic => {
                     html += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.name ? pic.name : '-'}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.email ? pic.email : '-'}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.phone ? pic.phone : '-'}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.designation ? pic.designation : '-'}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm border-b border-gray-200">
-                            <button class="edit-pic-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs mr-1"
-                                data-name="${pic.name}"
-                                data-phone="${pic.phone}"
-                                data-email="${pic.email}"
-                                data-designation="${pic.designation}"
-                                data-id="${pic.id}">Edit</button>
-                            <button class="delete-pic-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                                data-id="${pic.id}">Delete</button>
-                        </td>
-                    </tr>
-                `;
-                });
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.name ? pic.name : '-'}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.email ? pic.email : '-'}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.phone ? pic.phone : '-'}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-b border-gray-200">${pic.designation ? pic.designation : '-'}</td>
+                    `;
 
-                // Close the table tags
-                html += `
-                    </tbody>
-                </table>
-                <div class="flex justify-front mb-2 mt-2">
-                    <button class="bg-blue-600 text-white px-1 ml-2 rounded add-pic-btn" data-company-id="${companyId}">
-                        + Add PIC
-                    </button>
-                </div>
-            `;
+                    // Conditionally add the action buttons
+                    if (hasPermission) {
+                        html += `
+                            <td class="px-4 py-3 whitespace-nowrap text-sm border-b border-gray-200">
+                                <button class="edit-pic-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs mr-1"
+                                    data-name="${pic.name}"
+                                    data-phone="${pic.phone}"
+                                    data-email="${pic.email}"
+                                    data-designation="${pic.designation}"
+                                    data-id="${pic.id}">Edit</button>
+                                <button class="delete-pic-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                                    data-id="${pic.id}">Delete</button>
+                            </td>
+                        `;
+                    }
+
+                    html += '</tr>';
+                });
+                if (hasPermission) {
+                    // Close the table tags
+                    html += `
+                                </tbody>
+                            </table>
+                            <div class="flex justify-front mb-2 mt-2">
+                                <button class="bg-blue-600 text-white px-1 ml-2 rounded add-pic-btn" data-company-id="${companyId}">
+                                    + Add PIC
+                                </button>
+                            </div>
+                        `;
+                }
 
                 return html;
             }
@@ -1052,7 +1097,8 @@
                         } catch (error) {
                             console.error('Error in success callback:', error);
                             alert(
-                                'Update successful, but there was an issue refreshing the table.');
+                                'Update successful, but there was an issue refreshing the table.'
+                            );
                         }
                     },
                     error: function(xhr) {
@@ -1067,7 +1113,7 @@
                                     errorMessage = "Error: " + response.error;
                                 } catch (e) {
                                     errorMessage = "Error: " + xhr.status + " " + xhr
-                                    .statusText;
+                                        .statusText;
                                 }
                             }
 
@@ -1139,7 +1185,8 @@
                         } catch (error) {
                             console.error('Error in success callback:', error);
                             alert(
-                                'Update successful, but there was an issue refreshing the table.');
+                                'Update successful, but there was an issue refreshing the table.'
+                            );
                         }
                     },
                     error: function(xhr, status, error) {
@@ -1154,7 +1201,7 @@
                                     errorMessage = "Error: " + response.error;
                                 } catch (e) {
                                     errorMessage = "Error: " + xhr.status + " " + xhr
-                                    .statusText;
+                                        .statusText;
                                 }
                             }
 
@@ -1226,7 +1273,8 @@
                         } catch (error) {
                             console.error('Error in success callback:', error);
                             alert(
-                                'Update successful, but there was an issue refreshing the table.');
+                                'Update successful, but there was an issue refreshing the table.'
+                            );
                         }
                     },
                     error: function(xhr) {
@@ -1241,7 +1289,7 @@
                                     errorMessage = "Error: " + response.error;
                                 } catch (e) {
                                     errorMessage = "Error: " + xhr.status + " " + xhr
-                                    .statusText;
+                                        .statusText;
                                 }
                             }
 
@@ -1339,7 +1387,8 @@
                         } catch (error) {
                             console.error('Error in success callback:', error);
                             alert(
-                                'Update successful, but there was an issue refreshing the table.');
+                                'Update successful, but there was an issue refreshing the table.'
+                            );
                         }
                     },
                     error: function(xhr, status, error) {
@@ -1354,7 +1403,7 @@
                                     errorMessage = "Error: " + response.error;
                                 } catch (e) {
                                     errorMessage = "Error: " + xhr.status + " " + xhr
-                                    .statusText;
+                                        .statusText;
                                 }
                             }
 
@@ -1438,7 +1487,8 @@
                         } catch (error) {
                             console.error('Error in success callback:', error);
                             alert(
-                                'Update successful, but there was an issue refreshing the table.');
+                                'Update successful, but there was an issue refreshing the table.'
+                            );
                         }
                     },
                     error: function(xhr, status, error) {
@@ -1453,7 +1503,7 @@
                                     errorMessage = "Error: " + response.error;
                                 } catch (e) {
                                     errorMessage = "Error: " + xhr.status + " " + xhr
-                                    .statusText;
+                                        .statusText;
                                 }
                             }
 
@@ -1513,7 +1563,8 @@
                         } catch (error) {
                             console.error('Error in success callback:', error);
                             alert(
-                                'Update successful, but there was an issue refreshing the table.');
+                                'Update successful, but there was an issue refreshing the table.'
+                            );
                         }
                     },
                     error: function(xhr, status, error) {
@@ -1528,7 +1579,7 @@
                                     errorMessage = "Error: " + response.error;
                                 } catch (e) {
                                     errorMessage = "Error: " + xhr.status + " " + xhr
-                                    .statusText;
+                                        .statusText;
                                 }
                             }
 

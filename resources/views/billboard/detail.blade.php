@@ -58,10 +58,13 @@
                     class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 mr-2">
                     <i class="fas fa-map-marked-alt mr-2"></i> Show on Maps
                 </a>
-                <a href="javascript:void(0)" onclick="populateBillboardEditModal({{ json_encode($billboard_detail) }})"
-                    class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-200">
-                    <i class="fas fa-edit mr-2"></i> Edit
-                </a>
+                @if (Auth::guard('web')->check() &&
+                        Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                    <a href="javascript:void(0)" onclick="populateBillboardEditModal({{ json_encode($billboard_detail) }})"
+                        class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-200">
+                        <i class="fas fa-edit mr-2"></i> Edit
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -151,12 +154,15 @@
                                 <img src="{{ asset('storage/billboards/' . $billboard_detail->site_number . '_1.png') }}"
                                     class="w-full h-full object-contain max-h-96" alt="Billboard Image 1">
                             </div>
-                            <!-- Delete Button - Hidden by default, shown on hover -->
-                            <button onclick="deleteImage('{{ $billboard_detail->site_number }}_1.png', this)"
-                                class="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200 ease-in-out"
-                                aria-label="Delete Image 1">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            @if (Auth::guard('web')->check() &&
+                                    Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                                <!-- Delete Button - Hidden by default, shown on hover -->
+                                <button onclick="deleteImage('{{ $billboard_detail->site_number }}_1.png', this)"
+                                    class="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200 ease-in-out"
+                                    aria-label="Delete Image 1">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            @endif
                         @else
                             <div
                                 class="flex flex-col items-center justify-center h-full p-4 text-center text-gray-500 bg-gray-50">
@@ -174,12 +180,15 @@
                                 <img src="{{ asset('storage/billboards/' . $billboard_detail->site_number . '_2.png') }}"
                                     class="w-full h-full object-contain max-h-96" alt="Billboard Image 2">
                             </div>
-                            <!-- Delete Button - Hidden by default, shown on hover -->
-                            <button onclick="deleteImage('{{ $billboard_detail->site_number }}_2.png', this)"
-                                class="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200 ease-in-out"
-                                aria-label="Delete Image 2">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            @if (Auth::guard('web')->check() &&
+                                    Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                                <!-- Delete Button - Hidden by default, shown on hover -->
+                                <button onclick="deleteImage('{{ $billboard_detail->site_number }}_2.png', this)"
+                                    class="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200 ease-in-out"
+                                    aria-label="Delete Image 2">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            @endif
                         @else
                             <div
                                 class="flex flex-col items-center justify-center h-full p-4 text-center text-gray-500 bg-gray-50">
@@ -191,29 +200,33 @@
                 </div>
             </div>
 
-            <!-- File Upload Section -->
-            <div class="intro-y mt-8 pt-6 border-t border-gray-200">
-                <div class="border border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
-                    <h3 class="text-lg font-medium text-gray-800 mb-4">Upload New Images</h3>
-                    <p class="text-gray-600 mb-4">Drag & drop images here or click to browse. Maximum 2 images allowed.</p>
-                    <form id="fileUploadForm" action="{{ route('billboard.uploadImage') }}" method="POST"
-                        enctype="multipart/form-data"
-                        class="dropzone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        @csrf
-                        <input type="hidden" name="site_number" value="{{ $billboard_detail->site_number }}">
-                        <!-- <div class="fallback">
-                                                                            <input name="files[]" id="fileInput" type="file" multiple accept="image/*" />
-                                                                        </div> -->
-                        <div class="dz-message" data-dz-message>
-                            <div class="text-lg font-medium text-gray-700">
-                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i><br>
-                                Drop files here or click to upload.
+            @if (Auth::guard('web')->check() &&
+                    Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
+                <!-- File Upload Section -->
+                <div class="intro-y mt-8 pt-6 border-t border-gray-200">
+                    <div class="border border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">Upload New Images</h3>
+                        <p class="text-gray-600 mb-4">Drag & drop images here or click to browse. Maximum 2 images allowed.
+                        </p>
+                        <form id="fileUploadForm" action="{{ route('billboard.uploadImage') }}" method="POST"
+                            enctype="multipart/form-data"
+                            class="dropzone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                            @csrf
+                            <input type="hidden" name="site_number" value="{{ $billboard_detail->site_number }}">
+                            <!-- <div class="fallback">
+                                                                                            <input name="files[]" id="fileInput" type="file" multiple accept="image/*" />
+                                                                                        </div> -->
+                            <div class="dz-message" data-dz-message>
+                                <div class="text-lg font-medium text-gray-700">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i><br>
+                                    Drop files here or click to upload.
+                                </div>
+                                <div class="text-gray-500">Only PNG, JPG, JPEG files. Max 10MB each.</div>
                             </div>
-                            <div class="text-gray-500">Only PNG, JPG, JPEG files. Max 10MB each.</div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
     </div>
 

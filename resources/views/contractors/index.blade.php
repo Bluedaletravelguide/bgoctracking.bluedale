@@ -448,16 +448,18 @@
 
                 <!-- Right: Actions -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <a id="openAddContractor" href="javascript:;" data-toggle="modal" data-target="#contractorAddModal"
-                        class="btn-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm focus:ring-2 focus:ring-[#4bbbed] focus:outline-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Add New Contractor
-                    </a>
+                    @hasanyrole('superadmin|admin|support')
+                        <a id="openAddContractor" href="javascript:;" data-toggle="modal" data-target="#contractorAddModal"
+                            class="btn-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm focus:ring-2 focus:ring-[#4bbbed] focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add New Contractor
+                        </a>
+                    @endhasanyrole
                 </div>
             </div>
 
@@ -503,7 +505,9 @@
                             <th class="header-label text-left py-4 px-4">Company Name</th>
                             <th class="header-label text-left py-4 px-4">PIC Name</th>
                             <th class="header-label text-left py-4 px-4">Phone No.</th>
-                            <th class="header-label text-center py-4 px-4" width="10%">Action</th>
+                            @hasanyrole('superadmin|admin|support')
+                                <th class="header-label text-center py-4 px-4" width="10%">Action</th>
+                            @endhasanyrole
                         </tr>
                     </thead>
                     <tbody>
@@ -840,39 +844,16 @@
                     },
                     dom: "lBfrtip",
                     buttons: [{
-                            extend: "csv",
-                            className: "btn-ghost px-4 py-2 rounded-full text-sm font-medium",
-                            title: $fileName,
-                            exportOptions: {
-                                columns: ":not(.dt-exclude-export)"
-                            },
-                            init: function(api, node, config) {
-                                $(node).removeClass('dt-button buttons-html5');
-                            },
+                        extend: "excel",
+                        className: "btn-ghost px-4 py-2 rounded-full text-sm font-medium",
+                        title: $fileName,
+                        exportOptions: {
+                            columns: ":not(.dt-exclude-export)"
                         },
-                        {
-                            extend: "excel",
-                            className: "btn-ghost px-4 py-2 rounded-full text-sm font-medium",
-                            title: $fileName,
-                            exportOptions: {
-                                columns: ":not(.dt-exclude-export)"
-                            },
-                            init: function(api, node, config) {
-                                $(node).removeClass('dt-button buttons-html5');
-                            },
+                        init: function(api, node, config) {
+                            $(node).removeClass('dt-button buttons-html5');
                         },
-                        {
-                            extend: "print",
-                            className: "btn-ghost px-4 py-2 rounded-full text-sm font-medium",
-                            title: $fileName,
-                            exportOptions: {
-                                stripHtml: false,
-                            },
-                            init: function(api, node, config) {
-                                $(node).removeClass('dt-button buttons-html5');
-                            },
-                        },
-                    ],
+                    }, ],
                     columns: [{
                             data: null,
                             name: 'no',
@@ -897,11 +878,12 @@
                                 return `<span class="tabular-nums">${data}</span>`;
                             }
                         },
-                        {
-                            data: "id",
-                            className: "text-center dt-exclude-export",
-                            render: function(data, type, row) {
-                                return `
+                        @hasanyrole('superadmin|admin|support')
+                            {
+                                data: "id",
+                                className: "text-center dt-exclude-export",
+                                render: function(data, type, row) {
+                                    return `
                             <div class="flex items-center justify-center gap-3">
                                 <a href="javascript:;" class="text-[#4bbbed] hover:text-[#22255b] transition-colors" data-toggle="modal" data-target="#contractorEditModal" id="edit-${data}" title="Edit">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -914,8 +896,9 @@
                                     </svg>
                                 </a>
                             </div>`;
-                            }
-                        },
+                                }
+                            },
+                        @endhasanyrole
                     ],
                     drawCallback: function() {
                         $('#contractor_table tbody tr').addClass('ledger-row');
