@@ -47,6 +47,12 @@ class OutdoorMonthlyDetail extends Model
         'value_date',
     ];
 
+    public function masterFile()
+{
+    return $this->belongsTo(MasterFile::class, 'master_file_id');
+}
+
+
     protected $casts = [
         'master_file_id'  => 'integer',
         'outdoor_item_id' => 'integer',

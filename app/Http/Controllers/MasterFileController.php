@@ -114,7 +114,7 @@ class MasterFileController extends Controller
                 'master_files.id',   // required for row identity
                 'created_at',
                 'month',
-                'company',
+                'users.name as company',
                 'date',              // varchar
                 'date_finish',       // date
                 'barter',

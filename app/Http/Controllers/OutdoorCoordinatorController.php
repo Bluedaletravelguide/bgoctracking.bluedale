@@ -53,7 +53,8 @@ public function index(Request $request)
     ->leftJoin('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
     ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')              // site_number
     ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')              // location
-    ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')                 // district name
+    ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')
+    ->leftJoin('users as u', 'u.id', '=', 'mf.company_id')               // district name
     ->where(function ($w) {
         $w->whereRaw('LOWER(mf.product_category) REGEXP ?', ['(^|[^a-z])(outdoor|billboard)([^a-z]|$)'])
           ->orWhereRaw('LOWER(mf.product) REGEXP ?',          ['(^|[^a-z])(outdoor|billboard)([^a-z]|$)']);
@@ -61,15 +62,16 @@ public function index(Request $request)
 
     // -------- Search --------
     if ($search !== '') {
-        $like = '%' . strtolower($search) . '%';
-        $q->where(function ($w) use ($like) {
-            $w->whereRaw('LOWER(mf.company) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(mf.product) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(oi.site) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(oi.district_council) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(oi.coordinates) LIKE ?', [$like]);
-        });
-    }
+    $like = '%' . strtolower($search) . '%';
+    $q->where(function ($w) use ($like) {
+        $w->whereRaw('LOWER(COALESCE(u.name, mf.company)) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(mf.product) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(oi.site) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(oi.district_council) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(oi.coordinates) LIKE ?', [$like]);
+    });
+}
+
 
      $productFilter = strtoupper(trim((string) $request->get('product_filter', '')));
     if ($productFilter !== '' && $productFilter !== 'ALL') {
@@ -138,8 +140,8 @@ public function index(Request $request)
     // -------- Selects --------
     $q->select([
         'mf.id as master_file_id',
-        'mf.company as company',
-        'mf.client as client',
+    DB::raw('COALESCE(u.name, mf.company) as company'),
+    'mf.client as client',
         'mf.product as product',
         'mf.product_category as product_category',
         DB::raw('oi.id as outdoor_item_id'),
@@ -184,8 +186,9 @@ DB::raw('COALESCE(d.name, oi.district_council) as district'),
         DB::raw(($month !== null) ? 'md.tracking_id'         : 'oct.id as tracking_id'),
     ]);
 
-    $q->orderBy('mf.company')
+   $q->orderByRaw('LOWER(COALESCE(u.name, mf.company)) ASC')
   ->orderByRaw('LOWER(COALESCE(bb.site_number, loc.name, oi.site))');
+
 
 
     // -------- Paginate + page correction --------
@@ -693,6 +696,7 @@ public function export(Request $request): StreamedResponse
         ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
         ->leftJoin('locations  as loc', 'loc.id', '=', 'bb.location_id')
         ->leftJoin('districts  as d',   'd.id',   '=', 'loc.district_id')
+        ->leftJoin('users as u', 'u.id', '=', 'mf.company_id')
         ->where(function ($w) {
             $w->whereRaw('LOWER(mf.product_category) REGEXP ?', ['(^|[^a-z])(outdoor|billboard)([^a-z]|$)'])
               ->orWhereRaw('LOWER(mf.product) REGEXP ?',          ['(^|[^a-z])(outdoor|billboard)([^a-z]|$)']);
@@ -701,16 +705,17 @@ public function export(Request $request): StreamedResponse
 
     // Optional search (kept)
     if ($s = trim(strtolower((string)$request->get('search','')))) {
-        $like = '%'.$s.'%';
-        $q->where(function ($w) use ($like) {
-            $w->whereRaw('LOWER(mf.company) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(mf.product) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(oi.site) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(loc.name) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(oi.district_council) LIKE ?', [$like])
-              ->orWhereRaw('LOWER(oi.coordinates) LIKE ?', [$like]);
-        });
-    }
+    $like = '%'.$s.'%';
+    $q->where(function ($w) use ($like) {
+        $w->whereRaw('LOWER(COALESCE(u.name, mf.company)) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(mf.product) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(oi.site) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(loc.name) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(oi.district_council) LIKE ?', [$like])
+          ->orWhereRaw('LOWER(oi.coordinates) LIKE ?', [$like]);
+    });
+}
+
 
     // FIXED: Product filter - extract clean category from dropdown value
     $productFilter = strtoupper(trim((string) $request->get('product_filter', '')));
@@ -784,7 +789,7 @@ public function export(Request $request): StreamedResponse
     // === SELECTS (mirror of index) ===
     $q->select([
         'mf.id as master_file_id',
-        'mf.company as company',
+        DB::raw('COALESCE(u.name, mf.company) as company'),
         DB::raw($month
             ? "mf.client as person_in_charge"
             : "COALESCE(mf.client, oct.client) as person_in_charge"
@@ -820,8 +825,9 @@ DB::raw('loc.name as location_name'),
         DB::raw(($month ? 'md.next_follow_up_note'    : 'oct.next_follow_up_note as next_follow_up_note')),
     ]);
 
-    $q->orderByRaw('LOWER(mf.company)')
-      ->orderByRaw('LOWER(loc.name)');
+    $q->orderByRaw('LOWER(COALESCE(u.name, mf.company))')
+  ->orderByRaw('LOWER(loc.name)');
+
 
     $rows = $q->get();
 
@@ -848,10 +854,11 @@ DB::raw('loc.name as location_name'),
             else                                         $classifiedData['Other'][] = $row;
         }
 
-        // Remove empty categories so they don't appear as sheets
-        $classifiedData = array_filter($classifiedData, function($items) {
-            return count($items) > 0;
-        });
+       // Remove empty categories so they don't appear as sheets
+$classifiedData = array_filter($classifiedData, function ($items) {
+    return !empty($items);
+});
+
     }
 
     $monthName  = $month ? "month-{$month}" : 'all';

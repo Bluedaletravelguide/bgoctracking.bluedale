@@ -119,4 +119,10 @@ class OutdoorTrackCoordinator extends Model
         'next_follow_up'      => 'date',
         'masterfile_created_at' => 'datetime',
     ];
+
+    public function masterFile()
+{
+    return $this->belongsTo(MasterFile::class, 'master_file_id');
+}
+
 }

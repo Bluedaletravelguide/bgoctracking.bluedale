@@ -63,6 +63,7 @@ public function index(Request $request)
     // NEW joins to fetch site_number & location name (replace district with location)
 ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
 ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
+->leftJoin('users as u', 'u.id', '=', 'mf.company_id')
 // Only Outdoor category (robust)
 ->where(function ($w) {
     $w->whereRaw('LOWER(mf.product_category) LIKE ?', ['%outdoor%'])
@@ -74,7 +75,7 @@ public function index(Request $request)
     if ($search !== '') {
     $like = '%'.strtolower($search).'%';
     $q->where(function ($w) use ($like) {
-        $w->whereRaw('LOWER(mf.company) LIKE ?', [$like])
+        $w->whereRaw('LOWER(COALESCE(u.name, mf.company)) LIKE ?', [$like])
           ->orWhereRaw('LOWER(mf.product) LIKE ?', [$like])
           ->orWhereRaw('LOWER(oi.site) LIKE ?',   [$like])
           ->orWhereRaw('LOWER(COALESCE(oi.coordinates,"")) LIKE ?',     [$like])
@@ -129,7 +130,8 @@ $q->where(function ($w) use ($yearStart, $yearEnd) {
     }
 $rows = $q->select([
     'mf.id',
-    'mf.company','mf.product','mf.product_category',
+    DB::raw('COALESCE(u.name, mf.company) as company'),
+    'mf.product','mf.product_category',
     'mf.date         as mf_start',
     'mf.date_finish  as mf_end',
     'mf.month','mf.created_at',
@@ -146,8 +148,9 @@ $rows = $q->select([
 
     ->whereNotNull('oi.id')
     // optional: sort by company then site_number if ada, else oi.site
-    ->orderByRaw('LOWER(mf.company) ASC')
-    ->orderByRaw('LOWER(COALESCE(loc.name, oi.site)) ASC')
+    ->orderByRaw('LOWER(COALESCE(u.name, mf.company)) ASC')
+->orderByRaw('LOWER(COALESCE(loc.name, oi.site)) ASC')
+
 
     ->get();
 
@@ -315,10 +318,12 @@ public function exportMatrix(Request $req)
     $yearEnd   = Carbon::create($year, 12, 31, 23, 59, 59, $tz)->toDateString(); // YYYY-12-31
 
     // 1) Base query: per-site rows (include any contract that overlaps the year)
-    $sitesQ = \DB::table('master_files as mf')
-        ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
-        ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
-->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
+   $sitesQ = \DB::table('master_files as mf')
+    ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
+    ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
+    ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
+    ->leftJoin('users as u', 'u.id', '=', 'mf.company_id') // 👈 NEW
+
 
         ->when($product !== '', function ($q) use ($product) {
             $q->where('mf.product', $product);
@@ -330,16 +335,16 @@ public function exportMatrix(Request $req)
               ->whereDate('oi.end_date',   '>=', $yearStart);
         })
 
-        ->orderByRaw('LOWER(mf.company) ASC')
+       ->orderByRaw('LOWER(COALESCE(u.name, mf.company)) ASC')
 ->orderByRaw('loc.name IS NULL, LOWER(loc.name) ASC')
 ->orderByRaw('oi.site IS NULL, LOWER(oi.site) ASC');
 
 
     $siteRows = $sitesQ->get([
         'mf.id              as master_file_id',
-        'oi.id              as outdoor_item_id',
-        'mf.company',
-        'mf.product',
+    'oi.id              as outdoor_item_id',
+    \DB::raw('COALESCE(u.name, mf.company) as company'),
+    'mf.product',
         'mf.product_category',
         'mf.created_at      as created_at',
         'oi.start_date      as start',

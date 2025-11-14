@@ -520,6 +520,12 @@ class MasterFile extends Model
     return view('dashboard.master.outdoor', compact('rows', 'columns', 'active'));
 }
 
+public function companyUser()
+{
+    return $this->belongsTo(User::class, 'company_id');
+}
+
+
 
 
 }
