@@ -218,35 +218,42 @@ class MasterFileController extends Controller
       END
     ";
 
-        $q = DB::table('master_files as mf')
-            ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
-            ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
-            ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
-            ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')
-            ->leftJoin('states as s', 's.id', '=', 'd.state_id')
-            ->select([
-                'mf.id     as master_file_id',
-                'oi.id     as outdoor_item_id',
-                'mf.company',
-                'mf.product',
-                'mf.product_category',
-                'mf.created_at as created_at',
-                'mf.date       as start',
-                'mf.date_finish as end',
-                DB::raw('mf.month as month'),
-                DB::raw('mf.remarks as remarks'),
-                DB::raw('mf.duration as duration'),
-                DB::raw("CONCAT_WS(' - ', NULLIF(bb.site_number,''), NULLIF(loc.name,'')) as location"),
-                DB::raw("CONCAT(($stateAbbrSql), ' - ', COALESCE(d.name,'')) as area"),
-                DB::raw('oi.size as outdoor_size'),
-                DB::raw("
-                CASE
-                  WHEN bb.gps_latitude IS NOT NULL AND bb.gps_longitude IS NOT NULL
-                    THEN CONCAT(bb.gps_latitude, ',', bb.gps_longitude)
-                  ELSE oi.coordinates
-                END as outdoor_coordinates
-            "),
-            ]);
+      $q = DB::table('master_files as mf')
+    ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
+    // 🔴 JOIN ke client_companies
+    ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id')
+    ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
+    ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
+    ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')
+    ->leftJoin('states as s', 's.id', '=', 'd.state_id')
+    ->select([
+        'mf.id     as master_file_id',
+        'oi.id     as outdoor_item_id',
+
+        // 🔴 Pakai nama client company, fallback ke mf.company kalau belum ada mapping
+        DB::raw('COALESCE(cc.name, mf.company) as company'),
+
+        'mf.product',
+        'mf.product_category',
+        'mf.created_at as created_at',
+        'mf.date       as start',
+        'mf.date_finish as end',
+        DB::raw('mf.month as month'),
+        DB::raw('mf.remarks as remarks'),
+        DB::raw('mf.duration as duration'),
+        DB::raw("CONCAT_WS(' - ', NULLIF(bb.site_number,''), NULLIF(loc.name,'')) as location"),
+        DB::raw("CONCAT(($stateAbbrSql), ' - ', COALESCE(d.name,'')) as area"),
+        DB::raw('oi.size as outdoor_size'),
+        DB::raw("
+        CASE
+          WHEN bb.gps_latitude IS NOT NULL AND bb.gps_longitude IS NOT NULL
+            THEN CONCAT(bb.gps_latitude, ',', bb.gps_longitude)
+          ELSE oi.coordinates
+        END as outdoor_coordinates
+    "),
+    ]);
+
+
 
         // ✅ FIXED: Convert numeric month (9) to text ("September")
         if ($month >= 1 && $month <= 12) {
@@ -269,25 +276,29 @@ class MasterFileController extends Controller
         }
 
         // ✅ Search filter
-        if ($search !== '') {
-            $like = '%' . $search . '%';
-            $q->where(function ($w) use ($like) {
-                $w->where('mf.company', 'LIKE', $like)
-                    ->orWhere('mf.product', 'LIKE', $like)
-                    ->orWhere('oi.size', 'LIKE', $like)
-                    ->orWhere('bb.site_number', 'LIKE', $like)
-                    ->orWhere('loc.name', 'LIKE', $like)
-                    ->orWhere('d.name', 'LIKE', $like)
-                    ->orWhere('s.name', 'LIKE', $like)
-                    ->orWhere('mf.month', 'LIKE', $like)
-                    ->orWhere('mf.remarks', 'LIKE', $like);
-            });
-        }
+      if ($search !== '') {
+    $like = '%' . $search . '%';
+    $q->where(function ($w) use ($like) {
+        $w->where('cc.name', 'LIKE', $like)          // 🔴 client company
+            ->orWhere('mf.company', 'LIKE', $like)   // fallback ke text lama
+            ->orWhere('mf.product', 'LIKE', $like)
+            ->orWhere('oi.size', 'LIKE', $like)
+            ->orWhere('bb.site_number', 'LIKE', $like)
+            ->orWhere('loc.name', 'LIKE', $like)
+            ->orWhere('d.name', 'LIKE', $like)
+            ->orWhere('s.name', 'LIKE', $like)
+            ->orWhere('mf.month', 'LIKE', $like)
+            ->orWhere('mf.remarks', 'LIKE', $like);
+    });
+}
 
-        $rows = $q
-            ->orderByRaw('(mf.company IS NULL), LOWER(mf.company) ASC')
-            ->orderBy('mf.date', 'DESC')
-            ->get();
+
+
+       $rows = $q
+    ->orderByRaw('(COALESCE(cc.name, mf.company) IS NULL), LOWER(COALESCE(cc.name, mf.company)) ASC')
+    ->orderBy('mf.date', 'DESC')
+    ->get();
+
 
         $columns = [
             ['key' => 'created_at',              'label' => 'CREATED AT'],
@@ -2223,16 +2234,18 @@ class MasterFileController extends Controller
     ";
 
         // === Query: same source & columns as the page ===
-        $q = DB::table('master_files as mf')
-            ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
-            ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
+     $q = DB::table('master_files as mf')
+    ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
+    ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id') // 🔴 pakai client_companies
+    ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
+
             ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
             ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')
             ->leftJoin('states as s', 's.id', '=', 'd.state_id')
             ->select([
                 'mf.created_at',
                 DB::raw('mf.month as month'),
-                DB::raw('mf.company as company'),
+                 DB::raw('COALESCE(cc.name, mf.company) as company'),
                 DB::raw('mf.product as product'),
 
                 // LOCATION & AREA from billboard chain
@@ -2264,25 +2277,31 @@ class MasterFileController extends Controller
             $q->whereMonth('mf.date', $monthFilter);
         }
 
-        if ($term = trim((string) $request->get('search', ''))) {
-            $like = "%{$term}%";
-            $q->where(function ($w) use ($like) {
-                $w->where('mf.company', 'LIKE', $like)
-                    ->orWhere('mf.product', 'LIKE', $like)
-                    ->orWhere('oi.size', 'LIKE', $like)
-                    ->orWhere('bb.site_number', 'LIKE', $like)
-                    ->orWhere('loc.name', 'LIKE', $like)
-                    ->orWhere('d.name', 'LIKE', $like)
-                    ->orWhere('s.name', 'LIKE', $like)
-                    ->orWhere('mf.month', 'LIKE', $like)
-                    ->orWhere('mf.remarks', 'LIKE', $like);
-            });
-        }
+       if ($term = trim((string) $request->get('search', ''))) {
+    $like = "%{$term}%";
+    $q->where(function ($w) use ($like) {
+        $w->where('cc.name', 'LIKE', $like)          // 🔴 nama client company
+            ->orWhere('mf.company', 'LIKE', $like)   // fallback kalau belum ada relasi
+            ->orWhere('mf.product', 'LIKE', $like)
+            ->orWhere('oi.size', 'LIKE', $like)
+            ->orWhere('bb.site_number', 'LIKE', $like)
+            ->orWhere('loc.name', 'LIKE', $like)
+            ->orWhere('d.name', 'LIKE', $like)
+            ->orWhere('s.name', 'LIKE', $like)
+            ->orWhere('mf.month', 'LIKE', $like)
+            ->orWhere('mf.remarks', 'LIKE', $like);
+    });
+}
 
-        // MariaDB-safe ordering (same as page)
-        $rows = $q->orderByRaw('(mf.company IS NULL), LOWER(mf.company) ASC')
-            ->orderBy('mf.date', 'DESC')
-            ->cursor();
+
+       $rows = $q
+    ->orderByRaw(
+        '(COALESCE(cc.name, mf.company) IS NULL), ' .
+        'LOWER(COALESCE(cc.name, mf.company)) ASC'
+    )
+    ->orderBy('mf.date', 'DESC')
+    ->cursor();
+
 
         // === Column order & labels (match the page) ===
         $colKeys = [
