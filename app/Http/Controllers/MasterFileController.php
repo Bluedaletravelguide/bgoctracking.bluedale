@@ -108,19 +108,20 @@ class MasterFileController extends Controller
     // KLTG
     // ─────────────────────────────────────────────────────────────────────────────
     public function kltg(Request $request)
-    {
-        $rows = MasterFile::query()
-            ->select([
-                'master_files.id',   // required for row identity
-                'created_at',
-                'month',
-                'users.name as company',
-                'date',              // varchar
-                'date_finish',       // date
-                'barter',
-                'product',
-                'product_category',
-                'kltg_industry',
+{
+    $rows = MasterFile::query()
+        ->leftJoin('client_companies as cc', 'cc.id', '=', 'master_files.company_id')
+        ->select([
+    'master_files.id',   // required for row identity
+    'master_files.created_at',
+    'master_files.month',
+    DB::raw('COALESCE(cc.name, master_files.company) as company'),
+    'master_files.date',
+    'master_files.date_finish',       // date
+    'master_files.barter',
+    'master_files.product',
+    'master_files.product_category',
+    'master_files.kltg_industry',
                 'kltg_x',
                 'kltg_edition',
                 'kltg_material_cbp',
