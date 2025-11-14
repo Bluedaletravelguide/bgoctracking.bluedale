@@ -60,10 +60,10 @@ public function index(Request $request)
     ->leftJoinSub($d, 'd', function($j){
         $j->on('d.outdoor_item_id','=','oi.id');
     })
-    // NEW joins to fetch site_number & location name (replace district with location)
-->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
-->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
-->leftJoin('users as u', 'u.id', '=', 'mf.company_id')
+    ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
+    ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
+    ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id')
+
 // Only Outdoor category (robust)
 ->where(function ($w) {
     $w->whereRaw('LOWER(mf.product_category) LIKE ?', ['%outdoor%'])
@@ -71,19 +71,18 @@ public function index(Request $request)
 });
 
 
-    // Text search (optional)
     if ($search !== '') {
     $like = '%'.strtolower($search).'%';
     $q->where(function ($w) use ($like) {
-        $w->whereRaw('LOWER(COALESCE(u.name, mf.company)) LIKE ?', [$like])
+        $w->whereRaw('LOWER(COALESCE(cc.name, mf.company)) LIKE ?', [$like]) // 🔴 cc.name
           ->orWhereRaw('LOWER(mf.product) LIKE ?', [$like])
           ->orWhereRaw('LOWER(oi.site) LIKE ?',   [$like])
           ->orWhereRaw('LOWER(COALESCE(oi.coordinates,"")) LIKE ?',     [$like])
           ->orWhereRaw('LOWER(COALESCE(oi.district_council,"")) LIKE ?',[$like])
-          // NEW:
           ->orWhereRaw('LOWER(COALESCE(loc.name,"")) LIKE ?', [$like]);
     });
 }
+
 
 
     // Subproduct filter (BB/TB/…)
@@ -130,7 +129,8 @@ $q->where(function ($w) use ($yearStart, $yearEnd) {
     }
 $rows = $q->select([
     'mf.id',
-    DB::raw('COALESCE(u.name, mf.company) as company'),
+    // 🔴 nama client_company, fallback ke mf.company
+    DB::raw('COALESCE(cc.name, mf.company) as company'),
     'mf.product','mf.product_category',
     'mf.date         as mf_start',
     'mf.date_finish  as mf_end',
@@ -141,18 +141,16 @@ $rows = $q->select([
 
     'loc.name        as location_name',
 
-    // use explicit OI aliases
     'oi.start_date   as oi_start',
     'oi.end_date     as oi_end',
 ])
 
-    ->whereNotNull('oi.id')
-    // optional: sort by company then site_number if ada, else oi.site
-    ->orderByRaw('LOWER(COALESCE(u.name, mf.company)) ASC')
-->orderByRaw('LOWER(COALESCE(loc.name, oi.site)) ASC')
 
-
+ ->whereNotNull('oi.id')
+    ->orderByRaw('LOWER(COALESCE(cc.name, mf.company)) ASC')             // 🔴
+    ->orderByRaw('LOWER(COALESCE(loc.name, oi.site)) ASC')
     ->get();
+
 
 
     // Load monthly details for the selected year (+ optional month)
@@ -318,11 +316,13 @@ public function exportMatrix(Request $req)
     $yearEnd   = Carbon::create($year, 12, 31, 23, 59, 59, $tz)->toDateString(); // YYYY-12-31
 
     // 1) Base query: per-site rows (include any contract that overlaps the year)
-   $sitesQ = \DB::table('master_files as mf')
+ $sitesQ = \DB::table('master_files as mf')
     ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
     ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
     ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
-    ->leftJoin('users as u', 'u.id', '=', 'mf.company_id') // 👈 NEW
+    // 🔴 pakai client_companies
+    ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id')
+
 
 
         ->when($product !== '', function ($q) use ($product) {
@@ -335,23 +335,25 @@ public function exportMatrix(Request $req)
               ->whereDate('oi.end_date',   '>=', $yearStart);
         })
 
-       ->orderByRaw('LOWER(COALESCE(u.name, mf.company)) ASC')
-->orderByRaw('loc.name IS NULL, LOWER(loc.name) ASC')
-->orderByRaw('oi.site IS NULL, LOWER(oi.site) ASC');
+      ->orderByRaw('LOWER(COALESCE(cc.name, mf.company)) ASC')
+   ->orderByRaw('loc.name IS NULL, LOWER(loc.name) ASC')
+   ->orderByRaw('oi.site IS NULL, LOWER(oi.site) ASC');
 
 
-    $siteRows = $sitesQ->get([
-        'mf.id              as master_file_id',
+
+   $siteRows = $sitesQ->get([
+    'mf.id              as master_file_id',
     'oi.id              as outdoor_item_id',
-    \DB::raw('COALESCE(u.name, mf.company) as company'),
+    \DB::raw('COALESCE(cc.name, mf.company) as company'), // 🔴
     'mf.product',
-        'mf.product_category',
-        'mf.created_at      as created_at',
-        'oi.start_date      as start',
-        'oi.end_date        as end',
-        'oi.site            as road_raw',
-        'loc.name           as location_name',
-    ]);
+    'mf.product_category',
+    'mf.created_at      as created_at',
+    'oi.start_date      as start',
+    'oi.end_date        as end',
+    'oi.site            as road_raw',
+    'loc.name           as location_name',
+]);
+
 
     $title = "Outdoor - Monthly - {$today} - {$year}";
     $file  = \Illuminate\Support\Str::slug($title, '_').'.xlsx';
