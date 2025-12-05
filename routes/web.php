@@ -378,6 +378,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/get-districts', [LocationController::class, 'getDistrictsByState'])->name('location.getDistricts');
     Route::post('/get-councils', [LocationController::class, 'getCouncils'])->name('location.getCouncils');
     Route::post('/get-locations', [LocationController::class, 'getLocationsByDistrict'])->name('location.getLocations');
+    Route::post('/location/get-districts-by-state', [LocationController::class, 'getDistrictsByState'])->name('location.getDistrictsByState');
 
     // Billboard
     Route::get('/billboard', [BillboardController::class, 'index'])->name('billboard.index');

@@ -298,7 +298,7 @@
                                 {{ $y }}</option>
                         @endfor
                     </select>
-                </div>
+                </div><br>
 
                 <div class="flex items-center gap-2">
                     <input type="text" id="globalSearchInput"
@@ -309,6 +309,11 @@
                         Search
                     </button>
                 </div>
+            </div>
+            <div class="flex items-center mt-5">
+                <input type="checkbox" id="filterBookedOnly"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="filterBookedOnly" class="ml-2 block text-sm text-gray-700">Show Booked Only</label>
             </div>
         </div>
 
@@ -683,6 +688,9 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
     <!-- download excel -->
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -698,6 +706,43 @@
 
     <script>
         $(document).ready(function() {
+
+            // Initialize Select2 for all dropdowns
+            $('#filterAvailabilityState').select2({
+                placeholder: 'Search state...',
+                allowClear: true
+            });
+
+            $('#filterAvailabilityDistrict').select2({
+                placeholder: 'Search area...',
+                allowClear: true
+            });
+
+            $('#filterAvailabilityLocation').select2({
+                placeholder: 'Search location...',
+                allowClear: true
+            });
+
+            $('#filterAvailabilityType').select2({
+                placeholder: 'Search type...',
+                allowClear: true
+            });
+
+            $('#filterAvailabilitySiteType').select2({
+                placeholder: 'Search site type...',
+                allowClear: true
+            });
+
+            $('#filterAvailabilityStatus').select2({
+                placeholder: 'Search status...',
+                allowClear: true
+            });
+
+            $('#filterAvailabilityYear').select2({
+                placeholder: 'Select year...',
+                allowClear: true
+            });
+
 
             // Global search across both tables
             $('#globalSearchInput').on('keyup', function() {
@@ -729,8 +774,19 @@
                 const $districtSelect = $('#filterAvailabilityDistrict');
                 const $locationSelect = $('#filterAvailabilityLocation');
 
+                // Clear both district and location dropdowns
                 $districtSelect.empty().append('<option value="">-- Select Area --</option>');
                 $locationSelect.empty().append('<option value="">-- Select Location --</option>');
+
+                // Reinitialize Select2 for both dropdowns
+                $districtSelect.select2('destroy').select2({
+                    placeholder: 'Search area...',
+                    allowClear: true
+                });
+                $locationSelect.select2('destroy').select2({
+                    placeholder: 'Search location...',
+                    allowClear: true
+                });
 
                 if (stateId === '' || stateId === 'all') {
                     // Load all districts if no specific state is selected
@@ -743,6 +799,11 @@
                                     `<option value="${district.id}">${district.name}</option>`
                                 );
                             });
+                            // Reinitialize Select2 for District dropdown
+                            $districtSelect.select2('destroy').select2({
+                                placeholder: 'Search area...',
+                                allowClear: true
+                            });
 
                             // ✅ Reload table after loading all districts
                             $('#billboard_availability_table').DataTable().ajax.reload();
@@ -754,7 +815,7 @@
                 } else {
                     // Load filtered districts
                     $.ajax({
-                        url: '{{ route('location.getDistricts') }}',
+                        url: '{{ route('location.getDistrictsByState') }}', // Use the correct method name
                         type: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}',
@@ -765,6 +826,11 @@
                                 $districtSelect.append(
                                     `<option value="${district.id}">${district.name}</option>`
                                 );
+                            });
+                            // Reinitialize Select2 for District dropdown
+                            $districtSelect.select2('destroy').select2({
+                                placeholder: 'Search area...',
+                                allowClear: true
                             });
 
                             // ✅ Reload table after loading filtered districts
@@ -781,13 +847,14 @@
             $('#filterAvailabilityDistrict').on('change', function() {
                 let districtId = $(this).val();
 
-                // Reset Location dropdown
+                // Clear location dropdown
                 $('#filterAvailabilityLocation').empty().append(
                     '<option value="">-- Select Location --</option>');
 
                 if (districtId !== '') {
+                    // Load locations for selected district
                     $.ajax({
-                        url: '{{ route('location.getLocations') }}',
+                        url: '{{ route('location.getLocations') }}', // Use your new method
                         type: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}',
@@ -799,12 +866,37 @@
                                     `<option value="${location.id}">${location.name}</option>`
                                 );
                             });
-
-                            // ✅ Reload table after loading filtered districts
-                            $('#billboard_availability_table').DataTable().ajax.reload();
+                            $('#filterAvailabilityLocation').select2('destroy').select2({
+                                placeholder: 'Search location...',
+                                allowClear: true
+                            });
                         },
                         error: function() {
                             alert('Failed to load locations.');
+                        }
+                    });
+                } else {
+                    // When no district is selected, load all locations
+                    $.ajax({
+                        url: '{{ route('location.getLocations') }}', // Same method handles both cases
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            district_id: '' // Send empty string
+                        },
+                        success: function(locations) {
+                            locations.forEach(function(location) {
+                                $('#filterAvailabilityLocation').append(
+                                    `<option value="${location.id}">${location.name}</option>`
+                                );
+                            });
+                            $('#filterAvailabilityLocation').select2('destroy').select2({
+                                placeholder: 'Search location...',
+                                allowClear: true
+                            });
+                        },
+                        error: function() {
+                            alert('Failed to load all locations.');
                         }
                     });
                 }
@@ -892,6 +984,25 @@
                     `${billboardType}_Availability_Report_${year}_${formattedDate}_${formattedTime}.xlsx`;
 
                 const workbook = new ExcelJS.Workbook();
+
+                // Add the booked_only parameter to the AJAX call
+                const response = await $.ajax({
+                    url: '{{ route('billboard.monthly.availability') }}',
+                    method: 'GET',
+                    data: {
+                        start_date: `${year}-01-01`,
+                        end_date: `${year}-12-31`,
+                        year: year,
+                        type: $('#filterAvailabilityType').val(),
+                        site_type: $('#filterAvailabilitySiteType').val(),
+                        state: $('#filterAvailabilityState').val(),
+                        district: $('#filterAvailabilityDistrict').val(),
+                        location: $('#filterAvailabilityLocation').val(),
+                        status: $('#filterAvailabilityStatus').val(),
+                        booked_only: $('#filterBookedOnly').is(':checked') ? 1 : 0 // Add this line
+                    }
+                });
+
                 const monthlySheet = workbook.addWorksheet('Monthly Calendar');
 
                 // Prepare data
@@ -965,7 +1076,7 @@
                 ];
 
                 const legendRow = 2;
-                let startCol = 7; // G
+                let startCol = 8; // H
 
                 legendItems.forEach((item, i) => {
                     const col = startCol + i;
@@ -1024,6 +1135,9 @@
                 // Write header + data
                 monthlyData.forEach((rowData, i) => {
                     const excelRow = monthlySheet.getRow(headerRowIndex + i);
+                    const typeVal = ($('#filterAvailabilityType').val() || '').toLowerCase();
+                    const isBillboardType = typeVal === 'bb' || typeVal === 'billboard';
+                    const leftAlignCols = isBillboardType ? [3] : [2, 3];
 
                     rowData.forEach((v, colIdx) => {
                         excelRow.getCell(colIdx + 1).value = v;
@@ -1079,7 +1193,7 @@
                             };
                         } else {
                             // Alignment for specific columns
-                            if (colNumber === 3 || colNumber === 4) {
+                            if (leftAlignCols.includes(colNumber)) {
                                 cell.alignment = {
                                     horizontal: 'left',
                                     vertical: 'middle'
@@ -1093,9 +1207,10 @@
 
                             const colors = rowData._colors || [];
                             const colorClass = colors[colNumber - 1];
+                            const nonBookingCols = isBillboardType ? 7 : 6;
 
                             if (colNumber <=
-                                8
+                                nonBookingCols
                             ) { // Assuming first 8 columns (including GPS Coordinate) are non-booking
                                 // Force first 8 columns to black font, EXCEPT the GPS coordinate column if it has a link
                                 // Check if this is the GPS Coordinate column (column 6, index 5) and if it has a hyperlink
@@ -1127,8 +1242,9 @@
                                         argb: bgColor
                                     }
                                 };
-                                const fontColor = (colorClass === 'bg-theme-12') ? 'FF000000' :
-                                    'FFFFFFFF';
+                                // Font color: black for completed (yellow), white for others
+                                const fontColor = (colorClass === 'bg-yellow-400') ?
+                                    'FF000000' : 'FFFFFFFF';
                                 cell.font = {
                                     bold: true,
                                     color: {
@@ -1217,17 +1333,27 @@
                     });
                 });
 
+                const typeVal = ($('#filterAvailabilityType').val() || '').toLowerCase();
+                const isBillboardType = typeVal === 'bb' || typeVal === 'billboard';
+
                 // Column widths
-                const colWidths = [
+                const colWidths = isBillboardType ? [
                     5, // No
-                    12, // Site No
+                    30, // Site No
                     25, // Location
-                    20, // Area
                     12, // New/Existing
-                    25, // GPS Coordinate (Increased from default 10 or 12 to 25 to fit text)
-                    10, // Type
+                    25, // GPS Coordinate
+                    10, // Traffic Volume
                     10, // Size
-                    ...Array(totalCols - 8).fill(15) // Monthly columns (Jan '25, etc.)
+                    ...Array(12).fill(15) // Monthly columns (12 months)
+                ] : [
+                    5, // No
+                    30, // Location
+                    25, // Area
+                    12, // New/Existing
+                    25, // GPS Coordinate
+                    10, // Size
+                    ...Array(12).fill(15) // Monthly columns (12 months)
                 ];
                 colWidths.forEach((w, i) => monthlySheet.getColumn(i + 1).width = w);
 
@@ -1385,7 +1511,7 @@
                         }
                     });
                 });
-                [5, 12, 25, 20, 15, 15].forEach((w, i) => availabilitySheet.getColumn(i + 1).width = w);
+                [5, 25, 25, 20, 15, 15].forEach((w, i) => availabilitySheet.getColumn(i + 1).width = w);
 
                 // ---- Download ----
                 const buf = await workbook.xlsx.writeBuffer();
@@ -1395,133 +1521,152 @@
                 saveAs(blob, fileName);
             }
 
+
+
             function prepareMonthlyData() {
                 const year = $('#filterAvailabilityYear').val() || new Date().getFullYear();
                 const shortYear = String(year).slice(-2);
                 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-                // Build header row
-                const header = [
-                    'No', 'Site No', 'Location', 'Area', 'New/Existing', 'GPS Coordinate', 'Traffic Volume',
-                    'Size',
-                    ...months.map(month => `${month} '${shortYear}`)
-                ];
+                const typeVal = ($('#filterAvailabilityType').val() || '').toLowerCase();
+                const isBillboard = typeVal === 'bb' || typeVal === 'billboard';
+
+                const header = isBillboard ? ['No', 'Site No', 'Location', 'New/Existing', 'GPS Coordinate',
+                    'Traffic Volume', 'Size', ...months.map(m => `${m} '${shortYear}`)
+                ] : ['No', 'Location', 'Area', 'New/Existing', 'GPS Coordinate', 'Size', ...months.map(m =>
+                    `${m} '${shortYear}`)];
 
                 const data = [header];
 
-                // Loop through table rows
+                // Detect column layout from first row
+                const $firstDataRow = $('#monthly-booking-body tr').filter(function() {
+                    return $(this).find('td').length > 0 && !$(this).find('td').first().hasClass(
+                        'text-center');
+                }).first();
+
+                let hasSiteNo = true;
+                let hasTraffic = true;
+
+                if ($firstDataRow && $firstDataRow.length) {
+                    const $sampleCells = $firstDataRow.find('td');
+                    const sampleSiteText = ($sampleCells.eq(1).text() || '').trim();
+                    hasSiteNo = sampleSiteText !== '' && /[A-Z0-9\-]{3,}/.test(sampleSiteText);
+
+                    const sampleTrafficText = ($sampleCells.eq(5).text() || '').trim();
+                    hasTraffic = /^\s*\d+\s*x\s*\d+\s*$/i.test(sampleTrafficText);
+                }
+
+                // Define column indices based on actual DOM structure
+                const idx = {
+                    no: 0,
+                    siteNo: hasSiteNo ? 1 : null,
+                    location: hasSiteNo ? 2 : 1,
+                    area: hasSiteNo ? 3 : 2,
+                    newExisting: hasSiteNo ? 4 : 3,
+                    gps: hasSiteNo ? null : 4, // GPS not available for billboard with site no
+                    traffic: hasSiteNo ? 5 : null,
+                    size: hasSiteNo ? 6 : 5,
+                    monthsStart: hasSiteNo ? 7 : 6
+                };
+
                 $('#monthly-booking-body tr').each(function() {
                     const $row = $(this);
                     const $cells = $row.find('td');
 
-                    // Skip empty rows or header-like rows
                     if ($cells.length === 0 || $cells.first().hasClass('text-center')) return;
 
-                    // Retrieve the full row data object stored earlier
                     const fullRowData = $row.data('fullRowData');
-
-                    if (!fullRowData) {
-                        console.error("Full row data not found for row:", $row);
-                        return; // Skip this row if data not found
-                    }
+                    if (!fullRowData) return;
 
                     const rowData = [];
-                    const rowColors = []; // NEW: track color class for each cell
+                    const rowColors = [];
 
-                    // First 6 columns
-                    for (let i = 0; i < 5; i++) {
-                        const cellText = cleanForExport($($cells[i]).text().trim());
-                        const classList = $($cells[i]).attr('class') || '';
-                        const colorClass = classList.split(/\s+/).find(c => c.startsWith('bg-')) ||
-                            'bg-gray-400';
-
-                        rowData.push(cellText);
-                        rowColors.push(colorClass);
-                    }
-
-                    // Column 6: GPS Coordinate (Not from table cell, from API data)
-                    // Combine latitude and longitude
-                    const gpsLat = fullRowData.gps_latitude;
-                    const gpsLng = fullRowData.gps_longitude;
-                    const gpsUrl = fullRowData.gps_url;
-
-                    let gpsValueForExcel = ''; // This will be what's displayed in the cell
-                    let gpsHyperlink = null; // This will hold the URL if applicable
-
-                    if (gpsLat != null && gpsLng != null) {
-                        // Format to desired precision if needed, e.g., 6 decimal places
-                        gpsValueForExcel =
-                            `${parseFloat(gpsLat).toFixed(6)}, ${parseFloat(gpsLng).toFixed(6)}`;
-                        // Or simply: gpsValueForExcel = `${gpsLat}, ${gpsLng}`;
-                    }
-
-                    // Check if URL exists and set hyperlink
-                    if (gpsUrl && typeof gpsUrl === 'string' && gpsUrl.trim() !== '') {
-                        gpsHyperlink = gpsUrl.trim();
-                    }
-
-                    // For ExcelJS, if there's a hyperlink, we create an object with text and hyperlink properties
-                    // Otherwise, just push the text string
-                    if (gpsHyperlink) {
-                        rowData.push({
-                            text: gpsValueForExcel,
-                            hyperlink: gpsHyperlink,
-                            tooltip: gpsHyperlink
-                        }); // Optional: tooltip
-                    } else {
-                        rowData.push(gpsValueForExcel);
-                    }
-
-                    rowColors.push('bg-gray-400'); // Default color for non-colored columns
-
-                    // Column 7: Type (index 5 in original table cells, index 6 in new data array)
-                    const typeCellText = cleanForExport($($cells[5]).text().trim()); // Adjusted index
-                    const typeClassList = $($cells[5]).attr('class') || '';
-                    const typeColorClass = typeClassList.split(/\s+/).find(c => c.startsWith('bg-')) ||
-                        'bg-gray-400';
-                    rowData.push(typeCellText);
-                    rowColors.push(typeColorClass);
-
-                    // Column 8: Size (index 6 in original table cells, index 7 in new data array)
-                    const sizeCellText = cleanForExport($($cells[6]).text().trim()); // Adjusted index
-                    const sizeClassList = $($cells[6]).attr('class') || '';
-                    const sizeColorClass = sizeClassList.split(/\s+/).find(c => c.startsWith('bg-')) ||
-                        'bg-gray-400';
-                    rowData.push(sizeCellText);
-                    rowColors.push(sizeColorClass);
-
-                    // Monthly columns (handle colspan)
-                    let monthIndex = 0;
-                    for (let i = 7; i < $cells.length; i++) {
-                        const $cell = $($cells[i]);
-                        const colspan = parseInt($cell.attr('colspan')) || 1;
-                        const cellText = $cell.text().trim();
+                    function getColor($cell) {
                         const classList = $cell.attr('class') || '';
-                        const colorClass = classList.split(/\s+/).find(c => c.startsWith('bg-')) ||
-                            'bg-gray-400';
+                        return classList.split(/\s+/).find(c => c.startsWith('bg-')) || 'bg-gray-400';
+                    }
 
-                        for (let j = 0; j < colspan; j++) {
-                            if (monthIndex + j < 12) {
-                                rowData.push(cellText);
-                                rowColors.push(colorClass); // add same color for each month in colspan
-                            }
+                    function pushCellByIndex(i) {
+                        if (i === null || i >= $cells.length) {
+                            rowData.push('');
+                            rowColors.push('bg-gray-400');
+                            return;
+                        }
+                        const $c = $cells.eq(i);
+                        const txt = cleanForExport($c.text().trim());
+                        rowData.push(txt);
+                        rowColors.push(getColor($c));
+                    }
+
+                    function pushGps(dataRow) {
+                        const gpsLat = dataRow.gps_latitude;
+                        const gpsLng = dataRow.gps_longitude;
+                        const gpsUrl = dataRow.gps_url;
+
+                        let gpsValue = '';
+                        if (gpsLat != null && gpsLng != null) {
+                            gpsValue = `${parseFloat(gpsLat).toFixed(6)}, ${parseFloat(gpsLng).toFixed(6)}`;
                         }
 
-                        monthIndex += colspan;
+                        if (gpsUrl && typeof gpsUrl === 'string' && gpsUrl.trim() !== '') {
+                            rowData.push({
+                                text: gpsValue,
+                                hyperlink: gpsUrl.trim(),
+                                tooltip: gpsUrl.trim()
+                            });
+                        } else {
+                            rowData.push(gpsValue);
+                        }
+                        rowColors.push('bg-gray-400');
                     }
 
-                    // Fill any missing months with empty strings and default color
+                    if (isBillboard) {
+                        // Billboard: No, Site No, Location, New/Existing, GPS, Traffic Volume, Size
+                        pushCellByIndex(idx.no); // No
+                        pushCellByIndex(idx.siteNo); // Site No
+                        pushCellByIndex(idx.location); // Location
+                        pushCellByIndex(idx.newExisting); // New/Existing
+                        pushGps(fullRowData); // GPS
+                        pushCellByIndex(idx.traffic); // Traffic Volume
+                        pushCellByIndex(idx.size); // Size
+                    } else {
+                        // Others: No, Location, Area, New/Existing, GPS, Size
+                        pushCellByIndex(idx.no); // No (index 0)
+                        pushCellByIndex(idx.location); // Location (index 2 if hasSiteNo, else 1)
+                        pushCellByIndex(idx.area); // Area (index 3 if hasSiteNo, else 2)
+                        pushCellByIndex(idx.newExisting); // New/Existing (index 4 if hasSiteNo, else 3)
+                        pushGps(fullRowData); // GPS (from fullRowData)
+                        pushCellByIndex(idx.size); // Size (index 6 if hasSiteNo, else 5)
+                    }
+
+                    // Add monthly columns
+                    let monthCount = 0;
+                    for (let i = idx.monthsStart; i < $cells.length && monthCount < 12; i++) {
+                        const $c = $cells.eq(i);
+                        const colspan = parseInt($c.attr('colspan')) || 1;
+                        const txt = $c.text().trim();
+                        const cls = getColor($c);
+
+                        for (let j = 0; j < colspan && monthCount < 12; j++) {
+                            rowData.push(txt);
+                            rowColors.push(cls);
+                            monthCount++;
+                        }
+                    }
+
+                    // Fill remaining months if any missing
                     while (rowData.length < header.length) {
                         rowData.push('');
                         rowColors.push('bg-gray-400');
                     }
 
-                    rowData._colors = rowColors; // attach colors array to rowData
+                    rowData._colors = rowColors;
                     data.push(rowData);
                 });
 
                 return data;
             }
+
 
             function prepareAvailabilityData() {
                 // Define header row
@@ -1632,37 +1777,149 @@
                 }
             }
 
+            // function getMonthlyMergeInfo() {
+            //     const mergeInfo = [];
+
+            //     // Detect the starting index for monthly columns
+            //     const startIdx = (function detectMonthStart() {
+            //         const $first = $('#monthly-booking-body tr').filter(function() {
+            //             return $(this).find('td').length > 0 && !$(this).find('td').first()
+            //                 .hasClass('text-center');
+            //         }).first();
+
+            //         if (!$first.length) return 7;
+
+            //         const $cells = $first.find('td');
+            //         const sampleSiteText = ($cells.eq(1).text() || '').trim();
+            //         const hasSiteNo = sampleSiteText !== '' && /[A-Z0-9\-]{3,}/.test(sampleSiteText);
+
+            //         // Billboard with Site No: 7 columns before months (No, SiteNo, Location, New/Existing, GPS, Traffic, Size)
+            //         // Others without Site No: 6 columns before months (No, Location, Area, New/Existing, GPS, Size)
+            //         return hasSiteNo ? 7 : 6;
+            //     })();
+
+            //     $('#monthly-booking-body tr').each(function() {
+            //         const rowMerges = [];
+            //         const $cells = $(this).find('td');
+
+            //         // Column index in Excel (starts from startIdx which accounts for non-month columns)
+            //         let excelColIndex = startIdx;
+
+            //         // Iterate through actual month cells in DOM (starting from startIdx position)
+            //         for (let domIdx = startIdx; domIdx < $cells.length; domIdx++) {
+            //             const $cell = $cells.eq(domIdx);
+            //             const colspan = parseInt($cell.attr('colspan')) || 1;
+            //             const text = $cell.text().trim();
+
+            //             const classList = $cell.attr('class') || '';
+            //             const colorClass = classList.split(/\s+/).find(c => c.startsWith('bg-')) ||
+            //                 'bg-gray-400';
+
+            //             // Only create merge if colspan > 1
+            //             if (colspan > 1) {
+            //                 rowMerges.push({
+            //                     startCol: excelColIndex,
+            //                     endCol: excelColIndex + colspan - 1,
+            //                     text: text,
+            //                     color: colorClass
+            //                 });
+            //             }
+
+            //             excelColIndex += colspan;
+            //         }
+
+            //         mergeInfo.push(rowMerges);
+            //     });
+
+            //     return mergeInfo;
+            // }
 
             function getMonthlyMergeInfo() {
                 const mergeInfo = [];
+
+                const typeVal = ($('#filterAvailabilityType').val() || '').toLowerCase();
+                const isBillboard = typeVal === 'bb' || typeVal === 'billboard';
+
+                // Detect the starting DOM index for monthly columns
+                const domMonthStartIdx = (function detectMonthStart() {
+                    const $first = $('#monthly-booking-body tr').filter(function() {
+                        return $(this).find('td').length > 0 && !$(this).find('td').first()
+                            .hasClass('text-center');
+                    }).first();
+
+                    if (!$first.length) return 7;
+
+                    const $cells = $first.find('td');
+                    const sampleSiteText = ($cells.eq(1).text() || '').trim();
+                    const hasSiteNo = sampleSiteText !== '' && /[A-Z0-9\-]{3,}/.test(sampleSiteText);
+
+                    return hasSiteNo ? 7 : 6;
+                })();
+
+                // Excel column index where months start (based on header structure in prepareMonthlyData)
+                // Billboard: No, Site No, Location, New/Existing, GPS, Traffic Volume, Size = 7 columns
+                // Others: No, Location, Area, New/Existing, GPS, Size = 6 columns
+                const excelMonthStartIdx = isBillboard ? 7 : 6;
+
                 $('#monthly-booking-body tr').each(function() {
                     const rowMerges = [];
-                    let colIndex = 7; // start from month columns
+                    const $cells = $(this).find('td');
 
-                    $(this).find('td').slice(6).each(function() {
-                        const colspan = parseInt($(this).attr('colspan')) || 1;
-                        const text = $(this).text().trim();
+                    // Excel column index (where we're writing in the Excel file)
+                    let excelColIndex = excelMonthStartIdx;
 
-                        // Get color class (assumes only one bg-* class per td)
-                        const classList = $(this).attr('class') || '';
-                        const classes = classList.split(/\s+/);
-                        const colorClass = classes.find(c => c.startsWith('bg-')) || 'bg-gray-400';
+                    // Iterate through month cells in DOM (starting from domMonthStartIdx position)
+                    for (let domIdx = domMonthStartIdx; domIdx < $cells.length; domIdx++) {
+                        const $cell = $cells.eq(domIdx);
+                        const colspan = parseInt($cell.attr('colspan')) || 1;
+                        const text = $cell.text().trim();
 
+                        const classList = $cell.attr('class') || '';
+                        const colorClass = classList.split(/\s+/).find(c => c.startsWith('bg-')) ||
+                            'bg-gray-400';
+
+                        // Only create merge if colspan > 1
                         if (colspan > 1) {
                             rowMerges.push({
-                                startCol: colIndex,
-                                endCol: colIndex + colspan - 1,
+                                startCol: excelColIndex,
+                                endCol: excelColIndex + colspan - 1,
                                 text: text,
                                 color: colorClass
                             });
                         }
 
-                        colIndex += colspan;
-                    });
+                        excelColIndex += colspan;
+                    }
 
                     mergeInfo.push(rowMerges);
                 });
+
                 return mergeInfo;
+            }
+
+            function getDynamicMonthsStart() {
+                const typeVal = ($('#filterAvailabilityType').val() || '').toLowerCase();
+                const isBillboard = typeVal === 'bb' || typeVal === 'billboard';
+
+                const $firstDataRow = $('#monthly-booking-body tr').filter(function() {
+                    return $(this).find('td').length > 0 && !$(this).find('td').first().hasClass(
+                        'text-center');
+                }).first();
+
+                let hasSiteNo = true;
+                let hasTraffic = true;
+
+                if ($firstDataRow.length) {
+                    const $cells = $firstDataRow.find('td');
+
+                    const sampleSiteText = ($cells.eq(1).text() || '').trim();
+                    hasSiteNo = sampleSiteText !== '' && /[A-Z0-9\-]{3,}/.test(sampleSiteText);
+
+                    const sampleTrafficText = ($cells.eq(6).text() || '').trim();
+                    hasTraffic = /^\s*\d+\s*x\s*\d+\s*$/i.test(sampleTrafficText);
+                }
+
+                return hasSiteNo ? 7 : 6;
             }
 
             function styleAvailabilitySheet(worksheet) {
@@ -1835,7 +2092,8 @@
                         state: $('#filterAvailabilityState').val(),
                         district: $('#filterAvailabilityDistrict').val(),
                         location: $('#filterAvailabilityLocation').val(),
-                        status: $('#filterAvailabilityStatus').val()
+                        status: $('#filterAvailabilityStatus').val(),
+                        booked_only: $('#filterBookedOnly').is(':checked') ? 1 : 0
                     },
                     success: function(response) {
                         const tbody = $('#monthly-booking-body');
@@ -1862,7 +2120,7 @@
                         <td class="border border-gray-300">${row.area}</td>
                         <td class="border border-gray-300">${row.site_type}</td>
                         <td class="border border-gray-300">${row.traffic_volume}</td>
-                        <td class="border border-gray-300">${row.size}</td>`;
+                        <td class="border border-gray-300">${formatSize(row.size)}</td>`;
 
                             // row.months.forEach(month => {
                             //     let cellClass = `border border-gray-300 ${month.color} font-semibold`;
@@ -1899,6 +2157,16 @@
                 });
             }
 
+            function formatSize(size) {
+                if (!size) return "";
+
+                const clean = size.toLowerCase().replace(/\s+/g, '');
+                const parts = clean.split('x');
+
+                if (parts.length !== 2) return size;
+
+                return `${parts[0]}′ x ${parts[1]}′`;
+            }
 
             // Setup billboard availability datatable
             function initBillboardAvailabilityDatatable() {
@@ -1940,6 +2208,7 @@
                             d.state = $('#filterAvailabilityState').val();
                             d.district = $('#filterAvailabilityDistrict').val();
                             d.location = $('#filterAvailabilityLocation').val();
+                            d.booked_only = $('#filterBookedOnly').is(':checked') ? 1 : 0;
                         },
                         dataSrc: function(json) {
                             json.recordsTotal = json.recordsTotal;
@@ -1982,8 +2251,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                        data-full="${encodeURIComponent(data)}"
-                                                                                                                        data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2001,8 +2270,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                        data-full="${encodeURIComponent(data)}"
-                                                                                                                        data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2282,13 +2551,6 @@
             });
 
 
-
-
-
-
-
-
-
             // Global variables
             var filterAvailabilityState;
             var filterAvailabilityDistrict;
@@ -2469,7 +2731,7 @@
                 if ($.fn.DataTable.isDataTable(tableElement)) {
                     const table = tableElement.DataTable();
 
-                    $('#filterAvailabilityCompany, #filterAvailabilityState, #filterAvailabilityDistrict, #filterAvailabilityLocation, #filterAvailabilityType, #filterAvailabilitySiteType, #filterAvailabilityStatus, #filterAvailabilityStart, #filterAvailabilityEnd, #filterAvailabilityYear')
+                    $('#filterAvailabilityCompany, #filterAvailabilityState, #filterAvailabilityDistrict, #filterAvailabilityLocation, #filterAvailabilityType, #filterAvailabilitySiteType, #filterAvailabilityStatus, #filterAvailabilityStart, #filterAvailabilityEnd, #filterAvailabilityYear, #filterBookedOnly')
                         .on('change', function() {
                             const selectedYear = $('#filterAvailabilityYear').val();
 
@@ -2480,7 +2742,7 @@
                 }
 
                 // Also reload monthly table if only it exists
-                $('#filterAvailabilityCompany, #filterAvailabilityState, #filterAvailabilityDistrict, #filterAvailabilityLocation, #filterAvailabilityType, #filterAvailabilitySiteType, #filterAvailabilityStatus, #filterAvailabilityStart, #filterAvailabilityEnd, #filterAvailabilityYear')
+                $('#filterAvailabilityCompany, #filterAvailabilityState, #filterAvailabilityDistrict, #filterAvailabilityLocation, #filterAvailabilityType, #filterAvailabilitySiteType, #filterAvailabilityStatus, #filterAvailabilityStart, #filterAvailabilityEnd, #filterAvailabilityYear, #filterBookedOnly')
                     .on('change', function() {
                         const selectedYear = $('#filterAvailabilityYear').val();
                         buildMonthlyBookingTableHead(selectedYear);
@@ -2491,7 +2753,7 @@
 
             function setupMonthlyAvailabilityFilter() {
                 const filterSelectors =
-                    '#filterAvailabilityState, #filterAvailabilityDistrict, #filterAvailabilityLocation, #filterAvailabilityStatus, #filterAvailabilityStart, #filterAvailabilityEnd, #filterAvailabilityYear';
+                    '#filterAvailabilityState, #filterAvailabilityDistrict, #filterAvailabilityLocation, #filterAvailabilityStatus, #filterAvailabilityStart, #filterAvailabilityEnd, #filterAvailabilityYear, #filterBookedOnly';
 
                 $(filterSelectors).on('change', function() {
                     const selectedYear = $('#filterAvailabilityYear').val();

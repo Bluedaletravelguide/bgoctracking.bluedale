@@ -30,9 +30,9 @@ class LocationController extends Controller
         $stateId = $request->state_id;
 
         $councils = Council::where(function ($query) use ($stateId) {
-                $query->where('state_id', $stateId)
-                    ->orWhereNull('state_id'); // ✅ include KKR
-            })
+            $query->where('state_id', $stateId)
+                ->orWhereNull('state_id'); // ✅ include KKR
+        })
             ->select('id', 'name', 'abbreviation')
             ->orderBy('name')
             ->get();
@@ -41,21 +41,34 @@ class LocationController extends Controller
     }
 
 
-    // ✅ Get locations by district
     public function getLocationsByDistrict(Request $request)
     {
         $districtId = $request->district_id;
 
-        $locations = Location::join('billboards', 'billboards.location_id', '=', 'locations.id')
-        ->where('locations.district_id', $districtId)
-        ->select(
-            'locations.id as id',
-            'locations.name as name',
-            'billboards.id as billboard_id',
-            'billboards.site_number'
-        )
-        ->orderBy('locations.name')
-        ->get();
+        if (empty($districtId)) {
+            // Return all locations when no district is selected
+            $locations = Location::join('billboards', 'billboards.location_id', '=', 'locations.id')
+                ->select(
+                    'locations.id as id',
+                    'locations.name as name',
+                    'billboards.id as billboard_id',
+                    'billboards.site_number'
+                )
+                ->orderBy('locations.name')
+                ->get();
+        } else {
+            // Return locations for the selected district
+            $locations = Location::join('billboards', 'billboards.location_id', '=', 'locations.id')
+                ->where('locations.district_id', $districtId)
+                ->select(
+                    'locations.id as id',
+                    'locations.name as name',
+                    'billboards.id as billboard_id',
+                    'billboards.site_number'
+                )
+                ->orderBy('locations.name')
+                ->get();
+        }
 
         return response()->json($locations);
     }

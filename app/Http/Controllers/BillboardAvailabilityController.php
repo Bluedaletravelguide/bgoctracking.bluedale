@@ -157,6 +157,13 @@ class BillboardAvailabilityController extends Controller
         $filters = $this->extractFilters($request);
         $billboards = $this->queryFilteredBillboards($filters);
 
+        // Add booked-only filter
+        if ($request->input('booked_only') == 1) {
+            $billboards = $billboards->filter(function ($billboard) {
+                return $billboard->outdoorItems->count() > 0;
+            });
+        }
+
         // Define state abbreviations map
         $stateAbbrMap = [
             'Kuala Lumpur' => 'KL',
@@ -237,6 +244,13 @@ class BillboardAvailabilityController extends Controller
     {
         $filters = $this->extractFilters($request);
         $billboards = $this->queryFilteredBillboards($filters);
+
+        // Add booked-only filter after fetching billboards
+        if ($request->input('booked_only') == 1) {
+            $billboards = $billboards->filter(function ($billboard) {
+                return $billboard->outdoorItems->count() > 0;
+            });
+        }
 
         $results = [];
         foreach ($billboards as $billboard) {
@@ -379,16 +393,27 @@ class BillboardAvailabilityController extends Controller
     {
         return collect($items)
             ->sort(function ($a, $b) {
+                // Get the type from the items
+                $typeA = $a['type'] ?? '';
+                $typeB = $b['type'] ?? '';
 
-                // 0️⃣ First, sort by 'site_type' alphabetically
-                $siteTypeA = $a['site_type'] ?? '';
-                $siteTypeB = $b['site_type'] ?? '';
-                $siteTypeComparison = strcmp($siteTypeA, $siteTypeB);
-                if ($siteTypeComparison !== 0) {
-                    return $siteTypeComparison;
+                // Determine if it's Billboard type
+                $isBillboardA = in_array(strtolower($typeA), ['billboard', 'bb']);
+                $isBillboardB = in_array(strtolower($typeB), ['billboard', 'bb']);
+
+                // For Billboard type: sort by site_type first
+                if ($isBillboardA && $isBillboardB) {
+                    // 0️⃣ Sort by 'site_type' alphabetically (new, existing, rejected)
+                    $siteTypeA = $a['site_type'] ?? '';
+                    $siteTypeB = $b['site_type'] ?? '';
+                    $siteTypeComparison = strcmp($siteTypeA, $siteTypeB);
+                    if ($siteTypeComparison !== 0) {
+                        return $siteTypeComparison;
+                    }
                 }
 
-                // 2️⃣ If availability is the same, sort by 'area' alphabetically
+                // For all types (Billboard and non-Billboard):
+                // 1️⃣ Sort by 'area' alphabetically
                 $areaA = $a['area'] ?? '';
                 $areaB = $b['area'] ?? '';
                 $areaComparison = strcmp($areaA, $areaB);
@@ -396,10 +421,27 @@ class BillboardAvailabilityController extends Controller
                     return $areaComparison;
                 }
 
-                // 3️⃣ If 'area' is also the same, sort by 'location' alphabetically
+                // 2️⃣ Parse location to get main and sub parts
                 $locA = $a['location'] ?? '';
                 $locB = $b['location'] ?? '';
-                return strcmp($locA, $locB);
+
+                // Split location by comma to get main and sub location
+                $locPartsA = array_map('trim', explode(',', $locA));
+                $locPartsB = array_map('trim', explode(',', $locB));
+
+                $mainLocA = $locPartsA[0] ?? '';
+                $subLocA = $locPartsA[1] ?? '';
+                $mainLocB = $locPartsB[0] ?? '';
+                $subLocB = $locPartsB[1] ?? '';
+
+                // 3️⃣ Sort by main location
+                $mainLocComparison = strcmp($mainLocA, $mainLocB);
+                if ($mainLocComparison !== 0) {
+                    return $mainLocComparison;
+                }
+
+                // 4️⃣ Finally sort by sub location (if exists)
+                return strcmp($subLocA, $subLocB);
             })
             ->values()
             ->all();

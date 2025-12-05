@@ -108,20 +108,20 @@ class MasterFileController extends Controller
     // KLTG
     // ─────────────────────────────────────────────────────────────────────────────
     public function kltg(Request $request)
-{
-    $rows = MasterFile::query()
-        ->leftJoin('client_companies as cc', 'cc.id', '=', 'master_files.company_id')
-        ->select([
-    'master_files.id',   // required for row identity
-    'master_files.created_at',
-    'master_files.month',
-    DB::raw('COALESCE(cc.name, master_files.company) as company'),
-    'master_files.date',
-    'master_files.date_finish',       // date
-    'master_files.barter',
-    'master_files.product',
-    'master_files.product_category',
-    'master_files.kltg_industry',
+    {
+        $rows = MasterFile::query()
+            ->leftJoin('client_companies as cc', 'cc.id', '=', 'master_files.company_id')
+            ->select([
+                'master_files.id',   // required for row identity
+                'master_files.created_at',
+                'master_files.month',
+                DB::raw('COALESCE(cc.name, master_files.company) as company'),
+                'master_files.date',
+                'master_files.date_finish',       // date
+                'master_files.barter',
+                'master_files.product',
+                'master_files.product_category',
+                'master_files.kltg_industry',
                 'kltg_x',
                 'kltg_edition',
                 'kltg_material_cbp',
@@ -151,11 +151,11 @@ class MasterFileController extends Controller
                         ->orWhere('kltg_industry', 'like', "%{$search}%");
                 });
             })
-                    ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->get('date_from')))
-        ->when($request->filled('date_to'),   fn($q) => $q->whereDate('created_at', '<=', $request->get('date_to')))
-        ->latest('created_at')
-        ->paginate(10)              // ✅ MAX 10 ROWS PER PAGE
-        ->withQueryString();        // ✅ keep all current filters in the URL
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->get('date_from')))
+            ->when($request->filled('date_to'),   fn($q) => $q->whereDate('created_at', '<=', $request->get('date_to')))
+            ->latest('created_at')
+            ->paginate(10)              // ✅ MAX 10 ROWS PER PAGE
+            ->withQueryString();        // ✅ keep all current filters in the URL
 
 
         $columns = [
@@ -220,40 +220,40 @@ class MasterFileController extends Controller
       END
     ";
 
-      $q = DB::table('master_files as mf')
-    ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
-    // 🔴 JOIN ke client_companies
-    ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id')
-    ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
-    ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
-    ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')
-    ->leftJoin('states as s', 's.id', '=', 'd.state_id')
-    ->select([
-        'mf.id     as master_file_id',
-        'oi.id     as outdoor_item_id',
+        $q = DB::table('master_files as mf')
+            ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
+            // 🔴 JOIN ke client_companies
+            ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id')
+            ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
+            ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
+            ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')
+            ->leftJoin('states as s', 's.id', '=', 'd.state_id')
+            ->select([
+                'mf.id     as master_file_id',
+                'oi.id     as outdoor_item_id',
 
-        // 🔴 Pakai nama client company, fallback ke mf.company kalau belum ada mapping
-        DB::raw('COALESCE(cc.name, mf.company) as company'),
+                // 🔴 Pakai nama client company, fallback ke mf.company kalau belum ada mapping
+                DB::raw('COALESCE(cc.name, mf.company) as company'),
 
-        'mf.product',
-        'mf.product_category',
-        'mf.created_at as created_at',
-        'mf.date       as start',
-        'mf.date_finish as end',
-        DB::raw('mf.month as month'),
-        DB::raw('mf.remarks as remarks'),
-        DB::raw('mf.duration as duration'),
-        DB::raw("CONCAT_WS(' - ', NULLIF(bb.site_number,''), NULLIF(loc.name,'')) as location"),
-        DB::raw("CONCAT(($stateAbbrSql), ' - ', COALESCE(d.name,'')) as area"),
-        DB::raw('oi.size as outdoor_size'),
-        DB::raw("
+                'mf.product',
+                'mf.product_category',
+                'mf.created_at as created_at',
+                'mf.date       as start',
+                'mf.date_finish as end',
+                DB::raw('mf.month as month'),
+                DB::raw('mf.remarks as remarks'),
+                DB::raw('mf.duration as duration'),
+                DB::raw("CONCAT_WS(' - ', NULLIF(bb.site_number,''), NULLIF(loc.name,'')) as location"),
+                DB::raw("CONCAT(($stateAbbrSql), ' - ', COALESCE(d.name,'')) as area"),
+                DB::raw('oi.size as outdoor_size'),
+                DB::raw("
         CASE
           WHEN bb.gps_latitude IS NOT NULL AND bb.gps_longitude IS NOT NULL
             THEN CONCAT(bb.gps_latitude, ',', bb.gps_longitude)
           ELSE oi.coordinates
         END as outdoor_coordinates
     "),
-    ]);
+            ]);
 
 
 
@@ -278,25 +278,25 @@ class MasterFileController extends Controller
         }
 
         // ✅ Search filter
-      if ($search !== '') {
-    $like = '%' . $search . '%';
-    $q->where(function ($w) use ($like) {
-        $w->where('cc.name', 'LIKE', $like)          // 🔴 client company
-            ->orWhere('mf.company', 'LIKE', $like)   // fallback ke text lama
-            ->orWhere('mf.product', 'LIKE', $like)
-            ->orWhere('oi.size', 'LIKE', $like)
-            ->orWhere('bb.site_number', 'LIKE', $like)
-            ->orWhere('loc.name', 'LIKE', $like)
-            ->orWhere('d.name', 'LIKE', $like)
-            ->orWhere('s.name', 'LIKE', $like)
-            ->orWhere('mf.month', 'LIKE', $like)
-            ->orWhere('mf.remarks', 'LIKE', $like);
-    });
-}
+        if ($search !== '') {
+            $like = '%' . $search . '%';
+            $q->where(function ($w) use ($like) {
+                $w->where('cc.name', 'LIKE', $like)          // 🔴 client company
+                    ->orWhere('mf.company', 'LIKE', $like)   // fallback ke text lama
+                    ->orWhere('mf.product', 'LIKE', $like)
+                    ->orWhere('oi.size', 'LIKE', $like)
+                    ->orWhere('bb.site_number', 'LIKE', $like)
+                    ->orWhere('loc.name', 'LIKE', $like)
+                    ->orWhere('d.name', 'LIKE', $like)
+                    ->orWhere('s.name', 'LIKE', $like)
+                    ->orWhere('mf.month', 'LIKE', $like)
+                    ->orWhere('mf.remarks', 'LIKE', $like);
+            });
+        }
 
 
 
-             $rows = $q
+        $rows = $q
             ->orderByRaw('(COALESCE(cc.name, mf.company) IS NULL), LOWER(COALESCE(cc.name, mf.company)) ASC')
             ->orderBy('mf.date', 'DESC')
             ->paginate(10)          // ✅ MAX 10 ROWS PER PAGE
@@ -319,7 +319,7 @@ class MasterFileController extends Controller
             ['key' => 'remarks',                 'label' => 'REMARKS'],
         ];
 
-       $editable = [];
+        $editable = [];
 
         $updateUrl = route('outdoor.inline.update');
 
@@ -1383,29 +1383,29 @@ class MasterFileController extends Controller
                 $locations = $request->input('locations', []);
 
                 foreach ($locations as $loc) {
-    // Tangkap billboard_id (bisa numeric ID atau text manual)
-    $billboardIdRaw = $loc['billboard_id'] ?? null;
-    $billboardId = null;
-    $typedSite = '';
+                    // Tangkap billboard_id (bisa numeric ID atau text manual)
+                    $billboardIdRaw = $loc['billboard_id'] ?? null;
+                    $billboardId = null;
+                    $typedSite = '';
 
-    // Jika billboard_id adalah angka → user pilih dari dropdown
-    if (is_numeric($billboardIdRaw)) {
-        $billboardId = (int) $billboardIdRaw;
-    }
-    // Jika billboard_id adalah text → user ketik manual
-    elseif (is_string($billboardIdRaw) && trim($billboardIdRaw) !== '') {
-        $typedSite = trim($billboardIdRaw);
-    }
+                    // Jika billboard_id adalah angka → user pilih dari dropdown
+                    if (is_numeric($billboardIdRaw)) {
+                        $billboardId = (int) $billboardIdRaw;
+                    }
+                    // Jika billboard_id adalah text → user ketik manual
+                    elseif (is_string($billboardIdRaw) && trim($billboardIdRaw) !== '') {
+                        $typedSite = trim($billboardIdRaw);
+                    }
 
-    // Fallback: ambil dari field 'site' kalau ada
-    if (!$billboardId && !$typedSite) {
-        $typedSite = trim($loc['site'] ?? '');
-    }
+                    // Fallback: ambil dari field 'site' kalau ada
+                    if (!$billboardId && !$typedSite) {
+                        $typedSite = trim($loc['site'] ?? '');
+                    }
 
-    // Skip HANYA kalau kosong semua
-    if (!$billboardId && $typedSite === '') {
-        continue;
-    }
+                    // Skip HANYA kalau kosong semua
+                    if (!$billboardId && $typedSite === '') {
+                        continue;
+                    }
                     // Check for overlapping bookings
                     $startDate = $loc['start_date'] ?? null;
                     $endDate = $loc['end_date'] ?? null;
@@ -1451,58 +1451,58 @@ class MasterFileController extends Controller
                 if ($isOutdoor && !empty($locationsToProcess)) {
 
                     foreach ($locationsToProcess as $processedLoc) {
-    $loc = $processedLoc['location_data'];
-    $billboardId = $processedLoc['billboard_id'];
-    $typedSite = $processedLoc['typed_site'];
+                        $loc = $processedLoc['location_data'];
+                        $billboardId = $processedLoc['billboard_id'];
+                        $typedSite = $processedLoc['typed_site'];
 
-    // HAPUS skip check - sudah dihandle sebelum transaction
-    // Row pasti ada site (dari billboard atau manual input)
+                        // HAPUS skip check - sudah dihandle sebelum transaction
+                        // Row pasti ada site (dari billboard atau manual input)
 
-    $subProduct = $loc['sub_product'] ?? ($data['product'] ?? 'Outdoor');
-    $size       = $loc['size'] ?? null;
-    $area       = $loc['council'] ?? null;
-    $coords     = $loc['coords'] ?? null;
-    $remarks    = $loc['remarks'] ?? null;
-    $startDate  = $loc['start_date'] ?? null;
-    $endDate    = $loc['end_date'] ?? null;
-    $outdoorStatus = $loc['outdoor_status'] ?? null;
+                        $subProduct = $loc['sub_product'] ?? ($data['product'] ?? 'Outdoor');
+                        $size       = $loc['size'] ?? null;
+                        $area       = $loc['council'] ?? null;
+                        $coords     = $loc['coords'] ?? null;
+                        $remarks    = $loc['remarks'] ?? null;
+                        $startDate  = $loc['start_date'] ?? null;
+                        $endDate    = $loc['end_date'] ?? null;
+                        $outdoorStatus = $loc['outdoor_status'] ?? null;
 
-    // Prioritaskan typedSite (text manual dari user)
-    $siteLabel = $typedSite;
+                        // Prioritaskan typedSite (text manual dari user)
+                        $siteLabel = $typedSite;
 
-    // Hydrate dari billboard HANYA kalau billboard_id ada
-    if ($billboardId) {
-        $bb = \DB::table('billboards as b')
-            ->leftJoin('locations as l', 'l.id', '=', 'b.location_id')
-            ->where('b.id', $billboardId)
-            ->first(['b.site_number', 'b.size', 'b.gps_latitude', 'b.gps_longitude', 'l.name as area_name']);
+                        // Hydrate dari billboard HANYA kalau billboard_id ada
+                        if ($billboardId) {
+                            $bb = \DB::table('billboards as b')
+                                ->leftJoin('locations as l', 'l.id', '=', 'b.location_id')
+                                ->where('b.id', $billboardId)
+                                ->first(['b.site_number', 'b.size', 'b.gps_latitude', 'b.gps_longitude', 'l.name as area_name']);
 
-        if ($bb) {
-            // Override dengan data billboard (fallback ke typedSite kalau kosong)
-            $siteLabel = $bb->site_number ?: $typedSite;
-            $size      = $size ?: ($bb->size ?? null);
-            $area      = $area ?: ($bb->area_name ?? null);
-            if (!$coords && $bb->gps_latitude && $bb->gps_longitude) {
-                $coords = $bb->gps_latitude . ',' . $bb->gps_longitude;
-            }
-        }
-    }
+                            if ($bb) {
+                                // Override dengan data billboard (fallback ke typedSite kalau kosong)
+                                $siteLabel = $bb->site_number ?: $typedSite;
+                                $size      = $size ?: ($bb->size ?? null);
+                                $area      = $area ?: ($bb->area_name ?? null);
+                                if (!$coords && $bb->gps_latitude && $bb->gps_longitude) {
+                                    $coords = $bb->gps_latitude . ',' . $bb->gps_longitude;
+                                }
+                            }
+                        }
 
-    // Insert outdoor item (site pasti ada value)
-    $masterFile->outdoorItems()->create([
-        'sub_product'      => $subProduct,
-        'qty'              => 1,
-        'site'             => $siteLabel, // ✅ Pasti terisi (dari user atau billboard)
-        'size'             => $size,
-        'district_council' => $area,
-        'coordinates'      => $coords,
-        'remarks'          => $remarks,
-        'start_date'       => $startDate ?: null,
-        'end_date'         => $endDate   ?: null,
-        'status'           => $outdoorStatus,
-        'billboard_id'     => $billboardId, // ✅ Boleh NULL untuk manual entry
-    ]);
-}
+                        // Insert outdoor item (site pasti ada value)
+                        $masterFile->outdoorItems()->create([
+                            'sub_product'      => $subProduct,
+                            'qty'              => 1,
+                            'site'             => $siteLabel, // ✅ Pasti terisi (dari user atau billboard)
+                            'size'             => $size,
+                            'district_council' => $area,
+                            'coordinates'      => $coords,
+                            'remarks'          => $remarks,
+                            'start_date'       => $startDate ?: null,
+                            'end_date'         => $endDate   ?: null,
+                            'status'           => $outdoorStatus,
+                            'billboard_id'     => $billboardId, // ✅ Boleh NULL untuk manual entry
+                        ]);
+                    }
 
                     return; // Done with repeater mode
                 }
@@ -1554,7 +1554,7 @@ class MasterFileController extends Controller
                         ];
                     }
 
-                   if (!empty($items)) {
+                    if (!empty($items)) {
                         $masterFile->outdoorItems()->createMany($items);
                     }
                 }
@@ -1571,6 +1571,7 @@ class MasterFileController extends Controller
                             'sub_product'      => $subProduct,
                             'qty'              => 1,
                             'site'             => null,
+                            'product'          => $data['product'] ?? null,
                             'size'             => $data['outdoor_size'] ?? null,
                             'district_council' => $data['outdoor_district_council'] ?? null,
                             'coordinates'      => $data['outdoor_coordinates'] ?? null,
@@ -1631,70 +1632,109 @@ class MasterFileController extends Controller
     }
 
     // [ADD THIS helper in your controller]
-// private function buildKltgRemarks($file): array
-// {
-//     // Map labels → field names from master_files
-//     $map = [
-//         'Industry'                => 'kltg_industry',
-//         'X (Reach/Impressions)'   => 'kltg_x',
-//         'Edition'                 => 'kltg_edition',
-//         'Material (CBP)'          => 'kltg_material_cbp',
-//         'Print'                   => 'kltg_print',
-//         'Article'                 => 'kltg_article',
-//         'Video'                   => 'kltg_video',
-//         'Leaderboard'             => 'kltg_leaderboard',
-//         'QR Code'                 => 'kltg_qr_code',
-//         'Blog'                    => 'kltg_blog',
-//         'Email Marketing (eDM)'   => 'kltg_em',
-//         'Remarks (KLTG)'          => 'kltg_remarks',
-//     ];
+    // private function buildKltgRemarks($file): array
+    // {
+    //     // Map labels → field names from master_files
+    //     $map = [
+    //         'Industry'                => 'kltg_industry',
+    //         'X (Reach/Impressions)'   => 'kltg_x',
+    //         'Edition'                 => 'kltg_edition',
+    //         'Material (CBP)'          => 'kltg_material_cbp',
+    //         'Print'                   => 'kltg_print',
+    //         'Article'                 => 'kltg_article',
+    //         'Video'                   => 'kltg_video',
+    //         'Leaderboard'             => 'kltg_leaderboard',
+    //         'QR Code'                 => 'kltg_qr_code',
+    //         'Blog'                    => 'kltg_blog',
+    //         'Email Marketing (eDM)'   => 'kltg_em',
+    //         'Remarks (KLTG)'          => 'kltg_remarks',
+    //     ];
 
-//     $out = [];
-//     foreach ($map as $label => $attr) {
-//         $val = $file->{$attr} ?? null;
-//         if (isset($val) && trim((string)$val) !== '') {
-//             $out[$label] = $val;
-//         }
-//     }
+    //     $out = [];
+    //     foreach ($map as $label => $attr) {
+    //         $val = $file->{$attr} ?? null;
+    //         if (isset($val) && trim((string)$val) !== '') {
+    //             $out[$label] = $val;
+    //         }
+    //     }
 
-//     // If you still want to carry the generic remarks too:
-//     if (isset($file->remarks) && trim((string)$file->remarks) !== '') {
-//         $out['General Remarks'] = $file->remarks;
-//     }
+    //     // If you still want to carry the generic remarks too:
+    //     if (isset($file->remarks) && trim((string)$file->remarks) !== '') {
+    //         $out['General Remarks'] = $file->remarks;
+    //     }
 
-//     return $out;
-// }
+    //     return $out;
+    // }
 
+
+    // public function printAuto(MasterFile $file)
+    // {
+    //     $type = request('type') ?: $this->guessProductType($file);
+
+    //     // Ambil items outdoor dengan kolom yang dibutuhkan (termasuk tanggal)
+    //     if ($type === 'outdoor') {
+    //         $file->load([
+    //             'outdoorItems' => function ($q) {
+    //                 $q->orderBy('id')
+    //                     ->select([
+    //                         'id',
+    //                         'master_file_id', // <-- from outdoorItems
+    //                         'billboard_id',   // needed to join location
+    //                         'site',
+    //                         'size',
+    //                         'start_date',
+    //                         'end_date',
+    //                     ]);
+    //             },
+    //             'outdoorItems.billboard.location' => function ($q) {
+    //                 $q->orderBy('id')
+    //                     ->select([
+    //                         'id',
+    //                         'name',
+    //                     ]);
+    //             },
+    //         ]);
+    //         $items = $file->outdoorItems; // sudah berupa collection of models (tanggal = Carbon)
+    //     } else {
+    //         $items = collect();
+    //     }
+
+    //     $data = [
+    //         'file'         => $file,
+    //         'items'        => $items,
+    //         'date'         => $file->date ? Carbon::parse($file->date)->format('d/m/Y') : '',
+    //         'date_finish'  => $file->date_finish ? Carbon::parse($file->date_finish)->format('d/m/Y') : '',
+    //         'invoice_date' => $file->invoice_date ? Carbon::parse($file->invoice_date)->format('d/m/Y') : '',
+    //     ];
+
+    //     $views = [
+    //         'kltg'    => 'prints.kltg_job_order',
+    //         'outdoor' => 'prints.outdoor_job_order',
+    //         'media'   => 'prints.media_job_order',
+    //     ];
+
+    //     return Pdf::loadView($views[$type] ?? $views['kltg'], $data)
+    //         ->setPaper('a4', 'portrait')
+    //         ->download(strtoupper($type) . '_JobOrder_' . ($file->company ?? 'NA') . '.pdf');
+    // }
 
     public function printAuto(MasterFile $file)
     {
         $type = request('type') ?: $this->guessProductType($file);
 
-        // Ambil items outdoor dengan kolom yang dibutuhkan (termasuk tanggal)
         if ($type === 'outdoor') {
-            $file->load(['outdoorItems' => function ($q) {
-                $q->orderBy('id')
-                    ->select([
-                        'id',
-                        'master_file_id',
-                        'site',
-                        'size',
-                        'start_date',
-                        'end_date',   // <-- penting untuk IN CHARGE DATE
-                        // optional kalau dipakai di PDF:
-                        // 'district_council','coordinates','remarks','qty'
-                    ]);
-            }]);
-            $items = $file->outdoorItems; // sudah berupa collection of models (tanggal = Carbon)
+            // Simple, works, loads all related data
+            $file->load('outdoorItems.billboard.location');
+            $items = $file->outdoorItems;
         } else {
             $items = collect();
         }
 
         $data = [
-            'file'         => $file,
-            'items'        => $items,
-            'date'         => $file->date ? Carbon::parse($file->date)->format('d/m/Y') : '',
-            'date_finish'  => $file->date_finish ? Carbon::parse($file->date_finish)->format('d/m/Y') : '',
+            'file'  => $file,
+            'items' => $items,
+            'date'  => $file->date ? Carbon::parse($file->date)->format('d/m/Y') : '',
+            'date_finish' => $file->date_finish ? Carbon::parse($file->date_finish)->format('d/m/Y') : '',
             'invoice_date' => $file->invoice_date ? Carbon::parse($file->invoice_date)->format('d/m/Y') : '',
         ];
 
@@ -1710,8 +1750,10 @@ class MasterFileController extends Controller
     }
 
 
+
     private function guessProductType(MasterFile $file): string
     {
+        logger()->info('Guessing product type for MasterFile ID ' . $file);
         // Gather all possible fields you might be using
         $candidates = [
             (string)($file->product_category ?? ''), // e.g. BB, TB, Bunting, KLTG listing
@@ -2238,10 +2280,10 @@ class MasterFileController extends Controller
     ";
 
         // === Query: same source & columns as the page ===
-     $q = DB::table('master_files as mf')
-    ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
-    ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id') // 🔴 pakai client_companies
-    ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
+        $q = DB::table('master_files as mf')
+            ->join('outdoor_items as oi', 'oi.master_file_id', '=', 'mf.id')
+            ->leftJoin('client_companies as cc', 'cc.id', '=', 'mf.company_id') // 🔴 pakai client_companies
+            ->leftJoin('billboards as bb', 'bb.id', '=', 'oi.billboard_id')
 
             ->leftJoin('locations as loc', 'loc.id', '=', 'bb.location_id')
             ->leftJoin('districts as d', 'd.id', '=', 'loc.district_id')
@@ -2249,7 +2291,7 @@ class MasterFileController extends Controller
             ->select([
                 'mf.created_at',
                 DB::raw('mf.month as month'),
-                 DB::raw('COALESCE(cc.name, mf.company) as company'),
+                DB::raw('COALESCE(cc.name, mf.company) as company'),
                 DB::raw('mf.product as product'),
 
                 // LOCATION & AREA from billboard chain
@@ -2281,30 +2323,30 @@ class MasterFileController extends Controller
             $q->whereMonth('mf.date', $monthFilter);
         }
 
-       if ($term = trim((string) $request->get('search', ''))) {
-    $like = "%{$term}%";
-    $q->where(function ($w) use ($like) {
-        $w->where('cc.name', 'LIKE', $like)          // 🔴 nama client company
-            ->orWhere('mf.company', 'LIKE', $like)   // fallback kalau belum ada relasi
-            ->orWhere('mf.product', 'LIKE', $like)
-            ->orWhere('oi.size', 'LIKE', $like)
-            ->orWhere('bb.site_number', 'LIKE', $like)
-            ->orWhere('loc.name', 'LIKE', $like)
-            ->orWhere('d.name', 'LIKE', $like)
-            ->orWhere('s.name', 'LIKE', $like)
-            ->orWhere('mf.month', 'LIKE', $like)
-            ->orWhere('mf.remarks', 'LIKE', $like);
-    });
-}
+        if ($term = trim((string) $request->get('search', ''))) {
+            $like = "%{$term}%";
+            $q->where(function ($w) use ($like) {
+                $w->where('cc.name', 'LIKE', $like)          // 🔴 nama client company
+                    ->orWhere('mf.company', 'LIKE', $like)   // fallback kalau belum ada relasi
+                    ->orWhere('mf.product', 'LIKE', $like)
+                    ->orWhere('oi.size', 'LIKE', $like)
+                    ->orWhere('bb.site_number', 'LIKE', $like)
+                    ->orWhere('loc.name', 'LIKE', $like)
+                    ->orWhere('d.name', 'LIKE', $like)
+                    ->orWhere('s.name', 'LIKE', $like)
+                    ->orWhere('mf.month', 'LIKE', $like)
+                    ->orWhere('mf.remarks', 'LIKE', $like);
+            });
+        }
 
 
-       $rows = $q
-    ->orderByRaw(
-        '(COALESCE(cc.name, mf.company) IS NULL), ' .
-        'LOWER(COALESCE(cc.name, mf.company)) ASC'
-    )
-    ->orderBy('mf.date', 'DESC')
-    ->cursor();
+        $rows = $q
+            ->orderByRaw(
+                '(COALESCE(cc.name, mf.company) IS NULL), ' .
+                    'LOWER(COALESCE(cc.name, mf.company)) ASC'
+            )
+            ->orderBy('mf.date', 'DESC')
+            ->cursor();
 
 
         // === Column order & labels (match the page) ===
